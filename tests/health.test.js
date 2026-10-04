@@ -20,4 +20,25 @@ describe('khung he thong', () => {
     expect(res.status).toBe(501);
     expect(res.body).toMatchObject({ success: false, maLoi: 'CHUA_CAI_DAT' });
   });
+
+  test('POST /api/auth/login dang nhap thanh cong', async () => {
+    const res = await request(app).post('/api/auth/login').send({ username: 'phucvu01', password: '123456' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toMatchObject({
+      nhanVienId: 'nv-001',
+      hoTen: 'Nguyễn Văn A',
+      vaiTro: 'PHUC_VU',
+      trangChu: '/tables.html'
+    });
+    expect(typeof res.body.data.token).toBe('string');
+    expect(res.body.data.token.length).toBeGreaterThan(20);
+  });
+
+  test('POST /api/auth/login tra ve loi khi thieu thong tin', async () => {
+    const res = await request(app).post('/api/auth/login').send({ username: 'phucvu01' });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.maLoi).toBe('THIEU_THONG_TIN');
+  });
 });
