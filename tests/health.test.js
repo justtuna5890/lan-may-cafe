@@ -16,7 +16,8 @@ describe('khung he thong', () => {
   });
 
   test('UC chua cai dat tra ve 501 dung format', async () => {
-    const res = await request(app).post('/api/orders').send({});
+    // UC08 (lap hoa don) chua cai dat; doi sang UC khac khi UC nay xong
+    const res = await request(app).get('/api/orders/dh-001/invoice');
     expect(res.status).toBe(501);
     expect(res.body).toMatchObject({ success: false, maLoi: 'CHUA_CAI_DAT' });
   });
