@@ -4,14 +4,44 @@ const DonHangRepository = require('../repositories/DonHangRepository');
 const BanRepository = require('../repositories/BanRepository');
 const ThanhToanRepository = require('../repositories/ThanhToanRepository');
 const KetQuaThanhToan = require('../dto/KetQuaThanhToan');
+const HoaDonDTO = require('../dto/HoaDonDTO');
 
 const PHUONG_THUC = ['TIEN_MAT', 'QR'];
 
 class PaymentService {
   // UC08 - tra HoaDonDTO (soBan, dsMon, tongTien, tienGiamGia, canThanhToan)
   static async layHoaDon(donHangId) {
-    // TODO(T5)
-    throw new AppError('CHUA_CAI_DAT', 'UC08 chua duoc cai dat', 501);
+    const don = await DonHangRepository.findById(donHangId);
+    if (!don) throw new AppError('DON_KHONG_TON_TAI', 'Khong tim thay don hang', 404);
+    PaymentService.coTheThanhToan(don); // da thanh toan hoac con mon chua gui bep thi chan
+
+    const chiTiet = await DonHangRepository.findChiTietByDon(don.donHangId);
+    const dsMon = chiTiet
+      .filter((m) => m.trangThaiCheBien !== 'DA_HUY') // mon da huy khong len hoa don
+      .map((m) => ({
+        tenMon: m.tenMon, soLuong: m.soLuong, donGia: m.donGia, thanhTien: m.soLuong * m.donGia,
+      }));
+    const tongTien = dsMon.reduce((tong, m) => tong + m.thanhTien, 0);
+    const tienGiamGia = don.tienGiamGia || 0; // UC09 khuyen mai chua cai dat nen thuong bang 0
+    const ban = await BanRepository.findById(don.banId);
+
+    return new HoaDonDTO({
+      donHangId: don.donHangId,
+      soBan: ban ? ban.tenBan : null,
+      dsMon,
+      tongTien,
+      tienGiamGia,
+      canThanhToan: tongTien - tienGiamGia,
+    });
+  }
+
+  // Ho tro man Thu ngan: ban nay dang co don nao (BAN_KHONG_CO_DON neu ban trong)
+  static async layDonHienTaiCuaBan(banId) {
+    const ban = await BanRepository.findById(banId);
+    if (!ban) throw new AppError('BAN_KHONG_TON_TAI', 'Khong tim thay ban', 404);
+    const don = await DonHangRepository.findDangPhucVuByBan(banId);
+    if (!don) throw new AppError('BAN_KHONG_CO_DON', 'Ban chua co don hang', 404);
+    return { donHangId: don.donHangId };
   }
 
   // Kiem tra o server, khong chi o giao dien (TC-10-04, TC-10-05)

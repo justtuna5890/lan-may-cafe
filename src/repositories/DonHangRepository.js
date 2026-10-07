@@ -16,6 +16,11 @@ class DonHangRepository {
     throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.findById chua cai dat', 501);
   }
 
+  // Chi tiet cua don: [{ tenMon, soLuong, donGia, trangThaiCheBien }] (gom ca mon DA_HUY, service tu loc)
+  static async findChiTietByDon(donHangId) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.findChiTietByDon chua cai dat', 501);
+  }
+
   // conn (tuy chon): ket noi cua transaction
   static async capNhatTrangThai(donHangId, trangThai, conn) {
     throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.capNhatTrangThai chua cai dat', 501);
