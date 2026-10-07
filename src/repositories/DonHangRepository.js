@@ -10,6 +10,16 @@ class DonHangRepository {
   static async luuOrder(order) {
     throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.luuOrder chua cai dat', 501);
   }
+
+  // Tra ve { donHangId, banId, trangThai, tongTien, tienGiamGia, isSynced } hoac null
+  static async findById(donHangId) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.findById chua cai dat', 501);
+  }
+
+  // conn (tuy chon): ket noi cua transaction
+  static async capNhatTrangThai(donHangId, trangThai, conn) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.capNhatTrangThai chua cai dat', 501);
+  }
 }
 
 module.exports = DonHangRepository;

@@ -6,7 +6,8 @@ class BanRepository {
     throw new AppError('CHUA_CAI_DAT', 'BanRepository.findById chua cai dat', 501);
   }
 
-  static async capNhatTrangThai(banId, trangThai) {
+  // conn (tuy chon): ket noi cua transaction
+  static async capNhatTrangThai(banId, trangThai, conn) {
     throw new AppError('CHUA_CAI_DAT', 'BanRepository.capNhatTrangThai chua cai dat', 501);
   }
 }
