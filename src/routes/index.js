@@ -10,6 +10,11 @@ router.get('/health', (req, res) => ok(res, { status: 'up' }));
 // UC01
 router.post('/orders', OrderController.taoOrder);
 
+// UC04
+router.post('/orders/:id/items', OrderController.themMon);
+router.patch('/orders/:id/items/:chiTietId', OrderController.suaMon);
+router.delete('/orders/:id/items/:chiTietId', OrderController.huyMon);
+
 // UC08, UC10
 router.get('/tables/:id/current-order', PaymentController.layDonHienTai);
 router.get('/orders/:id/invoice', PaymentController.layHoaDon);

@@ -16,9 +16,29 @@ class DonHangRepository {
     throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.findById chua cai dat', 501);
   }
 
-  // Chi tiet cua don: [{ tenMon, soLuong, donGia, trangThaiCheBien }] (gom ca mon DA_HUY, service tu loc)
+  // Chi tiet cua don: [{ chiTietId, monId, tenMon, soLuong, donGia, ghiChu, trangThaiCheBien }]
+  // (gom ca mon DA_HUY, service tu loc)
   static async findChiTietByDon(donHangId) {
     throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.findChiTietByDon chua cai dat', 501);
+  }
+
+  // UC04: them cac mon moi vao don, tra ve cac mon vua luu (co chiTietId, trangThaiCheBien=CHO_PHA_CHE)
+  static async themChiTiet(donHangId, dsMonMoi, conn) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.themChiTiet chua cai dat', 501);
+  }
+
+  // UC04: sua 1 dong chi tiet, thay doi { soLuong } hoac { trangThaiCheBien }
+  static async capNhatChiTiet(chiTietId, thayDoi, conn) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.capNhatChiTiet chua cai dat', 501);
+  }
+
+  static async capNhatTongTien(donHangId, tongTien, conn) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.capNhatTongTien chua cai dat', 501);
+  }
+
+  // Dat co isSynced (false khi mon moi chua gui duoc xuong bep)
+  static async capNhatDongBo(donHangId, isSynced, conn) {
+    throw new AppError('CHUA_CAI_DAT', 'DonHangRepository.capNhatDongBo chua cai dat', 501);
   }
 
   // conn (tuy chon): ket noi cua transaction
