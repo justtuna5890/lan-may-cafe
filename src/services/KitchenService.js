@@ -3,6 +3,8 @@ const AppError = require('../utils/AppError');
 const {
     broadcastOrderUpdated
 } = require('../realtime/kds');
+const ChiTietDonRepository = require('../repositories/ChiTietDonRepository');
+const DonHangRepository = require('../repositories/DonHangRepository');
 
 class KitchenService {
 
@@ -10,29 +12,7 @@ class KitchenService {
     // UC15 - Lấy danh sách món cho KDS
     // =========================================================
     static async getKitchenItems() {
-        const [rows] = await pool.query(`
-            SELECT
-                ct.id AS chiTietId,
-                ct.don_hang_id AS donHangId,
-                d.ban_id AS banId,
-                b.so_ban AS soBan,
-                ct.mon_an_id AS monId,
-                m.ten_mon AS tenMon,
-                ct.so_luong AS soLuong,
-                ct.don_gia AS donGia,
-                ct.ghi_chu AS ghiChu,
-                ct.trang_thai_che_bien AS trangThaiCheBien,
-                d.ngay_tao AS ngayTao
-            FROM chi_tiet_don ct
-            INNER JOIN don_hang d
-                ON d.id = ct.don_hang_id
-            INNER JOIN mon_an m
-                ON m.id = ct.mon_an_id
-            LEFT JOIN ban b
-                ON b.id = d.ban_id
-            WHERE ct.trang_thai_che_bien NOT IN ('DA_XONG', 'DA_HUY')
-            ORDER BY d.ngay_tao ASC, ct.id ASC
-        `);
+        const rows = await ChiTietDonRepository.getKitchenItems();
 
         return rows.map(row => ({
             chiTietId: row.chiTietId,
@@ -49,7 +29,6 @@ class KitchenService {
         }));
     }
 
-
     // =========================================================
     // UC16 - Cập nhật trạng thái món
     // =========================================================
@@ -58,22 +37,15 @@ class KitchenService {
         const result = await withTransaction(async (connection) => {
 
             // -------------------------------------------------
-            // 1. Lấy chi tiết món và khóa dòng
+            // 1. Lấy món và khóa dòng
             // -------------------------------------------------
-            const [itemRows] = await connection.query(`
-                SELECT
-                    ct.id,
-                    ct.don_hang_id,
-                    ct.trang_thai_che_bien,
-                    d.trang_thai AS trang_thai_don
-                FROM chi_tiet_don ct
-                INNER JOIN don_hang d
-                    ON d.id = ct.don_hang_id
-                WHERE ct.id = ?
-                FOR UPDATE
-            `, [chiTietId]);
+            const item =
+                await ChiTietDonRepository.findByIdForUpdate(
+                    connection,
+                    chiTietId
+                );
 
-            if (itemRows.length === 0) {
+            if (!item) {
                 throw new AppError(
                     'MON_TRONG_DON_KHONG_TON_TAI',
                     'Món trong đơn không tồn tại',
@@ -81,12 +53,10 @@ class KitchenService {
                 );
             }
 
-            const item = itemRows[0];
-
             // -------------------------------------------------
             // 2. Không cho thao tác món đã hủy
             // -------------------------------------------------
-            if (item.trang_thai_che_bien === 'DA_HUY') {
+            if (item.trangThaiCheBien === 'DA_HUY') {
                 throw new AppError(
                     'MON_DA_HUY',
                     'Món đã bị hủy',
@@ -98,11 +68,15 @@ class KitchenService {
             // 3. Kiểm tra chuyển trạng thái hợp lệ
             // -------------------------------------------------
             const transitionHopLe =
-                (item.trang_thai_che_bien === 'CHO_PHA_CHE'
-                    && trangThaiMoi === 'DANG_LAM')
+                (
+                    item.trangThaiCheBien === 'CHO_PHA_CHE' &&
+                    trangThaiMoi === 'DANG_LAM'
+                )
                 ||
-                (item.trang_thai_che_bien === 'DANG_LAM'
-                    && trangThaiMoi === 'DA_XONG');
+                (
+                    item.trangThaiCheBien === 'DANG_LAM' &&
+                    trangThaiMoi === 'DA_XONG'
+                );
 
             if (!transitionHopLe) {
                 throw new AppError(
@@ -115,50 +89,47 @@ class KitchenService {
             // -------------------------------------------------
             // 4. Cập nhật trạng thái món
             // -------------------------------------------------
-            await connection.query(`
-                UPDATE chi_tiet_don
-                SET trang_thai_che_bien = ?
-                WHERE id = ?
-            `, [
-                trangThaiMoi,
-                chiTietId
-            ]);
+            await ChiTietDonRepository.capNhatTrangThaiWithConnection(
+                connection,
+                chiTietId,
+                trangThaiMoi
+            );
 
             // -------------------------------------------------
             // 5. Kiểm tra toàn bộ món trong đơn
             // -------------------------------------------------
-            let trangThaiDonMoi = item.trang_thai_don;
-
-            const [itemsInOrder] = await connection.query(`
-                SELECT trang_thai_che_bien
-                FROM chi_tiet_don
-                WHERE don_hang_id = ?
-            `, [item.don_hang_id]);
+            const itemsInOrder =
+                await ChiTietDonRepository.findTrangThaiByDonHangId(
+                    connection,
+                    item.donHangId
+                );
 
             const activeItems = itemsInOrder.filter(
-                x => x.trang_thai_che_bien !== 'DA_HUY'
+                x => x.trangThaiCheBien !== 'DA_HUY'
             );
 
             const tatCaDaXong =
                 activeItems.length > 0 &&
                 activeItems.every(
-                    x => x.trang_thai_che_bien === 'DA_XONG'
+                    x => x.trangThaiCheBien === 'DA_XONG'
                 );
 
+            let trangThaiDonMoi = item.trangThaiDon;
+
             if (tatCaDaXong) {
-                await connection.query(`
-                    UPDATE don_hang
-                    SET trang_thai = 'HOAN_THANH',
-                        ngay_cap_nhat = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                `, [item.don_hang_id]);
+
+                await DonHangRepository.capNhatTrangThaiWithConnection(
+                    connection,
+                    item.donHangId,
+                    'HOAN_THANH'
+                );
 
                 trangThaiDonMoi = 'HOAN_THANH';
             }
 
             return {
                 chiTietId,
-                donHangId: item.don_hang_id,
+                donHangId: item.donHangId,
                 trangThaiCheBien: trangThaiMoi,
                 trangThaiDon: trangThaiDonMoi
             };
@@ -172,7 +143,6 @@ class KitchenService {
         return result;
     }
 
-
     // =========================================================
     // UC16 - Undo trạng thái món
     // =========================================================
@@ -183,20 +153,13 @@ class KitchenService {
             // -------------------------------------------------
             // 1. Lấy món và khóa dòng
             // -------------------------------------------------
-            const [itemRows] = await connection.query(`
-                SELECT
-                    ct.id,
-                    ct.don_hang_id,
-                    ct.trang_thai_che_bien,
-                    d.trang_thai AS trang_thai_don
-                FROM chi_tiet_don ct
-                INNER JOIN don_hang d
-                    ON d.id = ct.don_hang_id
-                WHERE ct.id = ?
-                FOR UPDATE
-            `, [chiTietId]);
+            const item =
+                await ChiTietDonRepository.findByIdForUpdate(
+                    connection,
+                    chiTietId
+                );
 
-            if (itemRows.length === 0) {
+            if (!item) {
                 throw new AppError(
                     'MON_TRONG_DON_KHONG_TON_TAI',
                     'Món trong đơn không tồn tại',
@@ -204,12 +167,10 @@ class KitchenService {
                 );
             }
 
-            const item = itemRows[0];
-
             // -------------------------------------------------
             // 2. Không undo món đã hủy
             // -------------------------------------------------
-            if (item.trang_thai_che_bien === 'DA_HUY') {
+            if (item.trangThaiCheBien === 'DA_HUY') {
                 throw new AppError(
                     'MON_DA_HUY',
                     'Món đã bị hủy',
@@ -222,10 +183,10 @@ class KitchenService {
             // -------------------------------------------------
             let trangThaiMoi;
 
-            if (item.trang_thai_che_bien === 'DA_XONG') {
+            if (item.trangThaiCheBien === 'DA_XONG') {
                 trangThaiMoi = 'DANG_LAM';
             }
-            else if (item.trang_thai_che_bien === 'DANG_LAM') {
+            else if (item.trangThaiCheBien === 'DANG_LAM') {
                 trangThaiMoi = 'CHO_PHA_CHE';
             }
             else {
@@ -237,37 +198,34 @@ class KitchenService {
             }
 
             // -------------------------------------------------
-            // 4. Update trạng thái
+            // 4. Cập nhật trạng thái món
             // -------------------------------------------------
-            await connection.query(`
-                UPDATE chi_tiet_don
-                SET trang_thai_che_bien = ?
-                WHERE id = ?
-            `, [
-                trangThaiMoi,
-                chiTietId
-            ]);
+            await ChiTietDonRepository.capNhatTrangThaiWithConnection(
+                connection,
+                chiTietId,
+                trangThaiMoi
+            );
 
             // -------------------------------------------------
             // 5. Nếu order đã HOAN_THANH nhưng undo món
             //    thì đưa order về DANG_PHUC_VU
             // -------------------------------------------------
-            let trangThaiDonMoi = item.trang_thai_don;
+            let trangThaiDonMoi = item.trangThaiDon;
 
-            if (item.trang_thai_don === 'HOAN_THANH') {
-                await connection.query(`
-                    UPDATE don_hang
-                    SET trang_thai = 'DANG_PHUC_VU',
-                        ngay_cap_nhat = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                `, [item.don_hang_id]);
+            if (item.trangThaiDon === 'HOAN_THANH') {
+
+                await DonHangRepository.capNhatTrangThaiWithConnection(
+                    connection,
+                    item.donHangId,
+                    'DANG_PHUC_VU'
+                );
 
                 trangThaiDonMoi = 'DANG_PHUC_VU';
             }
 
             return {
                 chiTietId,
-                donHangId: item.don_hang_id,
+                donHangId: item.donHangId,
                 trangThaiCheBien: trangThaiMoi,
                 trangThaiDon: trangThaiDonMoi
             };
@@ -281,5 +239,4 @@ class KitchenService {
         return result;
     }
 }
-
 module.exports = KitchenService;
