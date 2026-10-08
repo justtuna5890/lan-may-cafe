@@ -40,4 +40,20 @@ router.get(
     requireRole('BARISTA'),
     KitchenController.layDanhSachMon
 );
+
+// UC16 - Cập nhật trạng thái món
+router.patch(
+    '/kitchen/items/:chiTietId/status',
+    verifyToken,
+    requireRole('BARISTA'),
+    KitchenController.capNhatTrangThaiMon
+);
+
+// Undo trạng thái món
+router.post(
+    '/kitchen/items/:chiTietId/undo',
+    verifyToken,
+    requireRole('BARISTA'),
+    KitchenController.hoanTacTrangThaiMon
+);
 module.exports = router;
