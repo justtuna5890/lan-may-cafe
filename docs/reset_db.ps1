@@ -26,6 +26,7 @@
 #   - Không hỏi password
 #   - Password lấy từ .env.example
 #   - Sử dụng MYSQL_PWD
+#   - RESET sẽ XÓA TOÀN BỘ database hiện tại
 # ============================================================
 
 
@@ -40,12 +41,8 @@ $ErrorActionPreference = "Stop"
 # 1. XÁC ĐỊNH ĐƯỜNG DẪN PROJECT
 # ============================================================
 
-# Thư mục hiện tại của script:
-# D:\CODE\PROJECT_ANTI\CNPM\lan-may-cafe\docs
 $ScriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Root project:
-# D:\CODE\PROJECT_ANTI\CNPM\lan-may-cafe
 $ProjectRoot = Split-Path -Parent $ScriptDirectory
 
 
@@ -123,51 +120,91 @@ function Read-EnvFile {
 
     $Values = @{}
 
-    $Lines = Get-Content -LiteralPath $FilePath -ErrorAction Stop
+    $Lines = Get-Content `
+        -LiteralPath $FilePath `
+        -ErrorAction Stop
+
 
     foreach ($Line in $Lines) {
 
+        # ----------------------------------------------------
         # Xóa khoảng trắng đầu/cuối
+        # ----------------------------------------------------
+
         $Line = $Line.Trim()
 
+
+        # ----------------------------------------------------
         # Bỏ dòng rỗng
+        # ----------------------------------------------------
+
         if ([string]::IsNullOrWhiteSpace($Line)) {
             continue
         }
 
+
+        # ----------------------------------------------------
         # Bỏ comment
+        # ----------------------------------------------------
+
         if ($Line.StartsWith("#")) {
             continue
         }
 
+
+        # ----------------------------------------------------
         # Phải có dấu =
+        # ----------------------------------------------------
+
         if ($Line -notmatch "=") {
             continue
         }
 
-        # Tách thành KEY và VALUE
+
+        # ----------------------------------------------------
+        # Tách KEY=VALUE
+        # Chỉ tách dấu = đầu tiên
+        # ----------------------------------------------------
+
         $Parts = $Line -split "=", 2
+
 
         if ($Parts.Count -ne 2) {
             continue
         }
 
+
         $Key = $Parts[0].Trim()
 
         $Value = $Parts[1].Trim()
 
-        # Bỏ quote
+
+        # ----------------------------------------------------
+        # Bỏ quote nếu có
+        # ----------------------------------------------------
+
         if (
-            ($Value.StartsWith('"') -and $Value.EndsWith('"')) -or
-            ($Value.StartsWith("'") -and $Value.EndsWith("'"))
+            $Value.Length -ge 2 -and
+            (
+                ($Value.StartsWith('"') -and $Value.EndsWith('"')) -or
+                ($Value.StartsWith("'") -and $Value.EndsWith("'"))
+            )
         ) {
-            if ($Value.Length -ge 2) {
-                $Value = $Value.Substring(1, $Value.Length - 2)
-            }
+
+            $Value = $Value.Substring(
+                1,
+                $Value.Length - 2
+            )
         }
+
+
+        # ----------------------------------------------------
+        # Lưu vào Hashtable
+        # ----------------------------------------------------
 
         $Values[$Key] = $Value
     }
+
 
     return $Values
 }
@@ -209,84 +246,87 @@ Write-Section "[2/7] DOC DATABASE CONFIG"
 
 
 # ------------------------------------------------------------
-# Giá trị mặc định
-# Giống src/config/index.js
+# Lấy trực tiếp bằng Get_Item()
+#
+# Đồng bộ với setup_db.ps1.
+# Không sử dụng:
+#
+#   $EnvValues["DB_PASSWORD"]
+#
 # ------------------------------------------------------------
 
-$DbHost = "localhost"
+$DbHost = [string]$EnvValues.Get_Item("DB_HOST")
 
-$DbPort = 3306
+$DbPortText = [string]$EnvValues.Get_Item("DB_PORT")
 
-$DbUser = "root"
+$DbUser = [string]$EnvValues.Get_Item("DB_USER")
 
-$DbPassword = "123456"
+$DbPassword = [string]$EnvValues.Get_Item("DB_PASSWORD")
 
-$Database = "lan_may_cafe"
+$Database = [string]$EnvValues.Get_Item("DB_NAME")
 
 
-# ------------------------------------------------------------
-# DB_HOST
-# ------------------------------------------------------------
+# ============================================================
+# KIỂM TRA CONFIG
+# ============================================================
 
-if (
-    $EnvValues.ContainsKey("DB_HOST") -and
-    -not [string]::IsNullOrWhiteSpace($EnvValues["DB_HOST"])
-) {
-    $DbHost = $EnvValues["DB_HOST"]
+if ([string]::IsNullOrWhiteSpace($DbHost)) {
+
+    Write-ErrorMessage "DB_HOST khong co gia tri trong .env.example"
+
+    exit 1
 }
 
 
-# ------------------------------------------------------------
-# DB_PORT
-# ------------------------------------------------------------
+if ([string]::IsNullOrWhiteSpace($DbPortText)) {
 
-if (
-    $EnvValues.ContainsKey("DB_PORT") -and
-    -not [string]::IsNullOrWhiteSpace($EnvValues["DB_PORT"])
-) {
-    $DbPort = [int]$EnvValues["DB_PORT"]
+    Write-ErrorMessage "DB_PORT khong co gia tri trong .env.example"
+
+    exit 1
 }
 
 
-# ------------------------------------------------------------
-# DB_USER
-# ------------------------------------------------------------
+$DbPort = 0
 
-if (
-    $EnvValues.ContainsKey("DB_USER") -and
-    -not [string]::IsNullOrWhiteSpace($EnvValues["DB_USER"])
-) {
-    $DbUser = $EnvValues["DB_USER"]
+
+if (-not [int]::TryParse(
+        $DbPortText,
+        [ref]$DbPort
+    )) {
+
+    Write-ErrorMessage "DB_PORT khong phai so hop le: $DbPortText"
+
+    exit 1
 }
 
 
-# ------------------------------------------------------------
-# DB_PASSWORD
-# ------------------------------------------------------------
+if ([string]::IsNullOrWhiteSpace($DbUser)) {
 
-if (
-    $EnvValues.ContainsKey("DB_PASSWORD") -and
-    -not [string]::IsNullOrWhiteSpace($EnvValues["DB_PASSWORD"])
-) {
-    $DbPassword = $EnvValues["DB_PASSWORD"]
+    Write-ErrorMessage "DB_USER khong co gia tri trong .env.example"
+
+    exit 1
 }
 
 
-# ------------------------------------------------------------
-# DB_NAME
-# ------------------------------------------------------------
+if ([string]::IsNullOrWhiteSpace($DbPassword)) {
 
-if (
-    $EnvValues.ContainsKey("DB_NAME") -and
-    -not [string]::IsNullOrWhiteSpace($EnvValues["DB_NAME"])
-) {
-    $Database = $EnvValues["DB_NAME"]
+    Write-ErrorMessage "DB_PASSWORD khong co gia tri trong .env.example"
+
+    exit 1
 }
 
 
-# ------------------------------------------------------------
-# Hiển thị config
-# ------------------------------------------------------------
+if ([string]::IsNullOrWhiteSpace($Database)) {
+
+    Write-ErrorMessage "DB_NAME khong co gia tri trong .env.example"
+
+    exit 1
+}
+
+
+# ============================================================
+# HIỂN THỊ CONFIG
+# ============================================================
 
 Write-Host ""
 
@@ -298,9 +338,9 @@ Write-Host "  Port     : $DbPort"
 
 Write-Host "  User     : $DbUser"
 
-Write-Host "  Database : $Database"
+Write-Host "  Password : ********"
 
-# Không in password.
+Write-Host "  Database : $Database"
 
 
 # ============================================================
@@ -319,7 +359,10 @@ $MysqlExe = $null
 
 try {
 
-    $MysqlCommand = Get-Command mysql.exe -ErrorAction SilentlyContinue
+    $MysqlCommand = Get-Command `
+        mysql.exe `
+        -ErrorAction SilentlyContinue
+
 
     if ($MysqlCommand) {
 
@@ -378,13 +421,15 @@ if (-not $MysqlExe) {
 
     Write-Host ""
 
-    Write-Host "Hay kiem tra MySQL Server da duoc cai dat." -ForegroundColor Yellow
+    Write-Host "Hay kiem tra MySQL Server da duoc cai dat." `
+        -ForegroundColor Yellow
 
     Write-Host ""
 
     Write-Host "Vi du:" -ForegroundColor Yellow
 
-    Write-Host "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
+    Write-Host `
+        "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"
 
     exit 1
 }
@@ -451,7 +496,10 @@ Write-Success "seed.sql"
 $OldMysqlPwd = $env:MYSQL_PWD
 
 
+# ------------------------------------------------------------
 # Đặt password lấy từ .env.example
+# ------------------------------------------------------------
+
 $env:MYSQL_PWD = $DbPassword
 
 
@@ -462,7 +510,9 @@ $env:MYSQL_PWD = $DbPassword
 Write-Section "[5/7] KIEM TRA KET NOI MYSQL"
 
 
-Write-Host "Dang kiem tra dang nhap MySQL..." -ForegroundColor Cyan
+Write-Host `
+    "Dang kiem tra dang nhap MySQL..." `
+    -ForegroundColor Cyan
 
 
 $LoginOutput = & $MysqlExe `
@@ -493,10 +543,15 @@ if ($LoginExitCode -ne 0) {
     Write-Host "  Database : $Database"
 
 
+    # --------------------------------------------------------
     # Khôi phục MYSQL_PWD
+    # --------------------------------------------------------
+
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -522,13 +577,20 @@ Write-Section "[6/7] RESET DATABASE"
 # 11.1 XÓA DATABASE CŨ
 # ============================================================
 
-Write-Host "Dang xoa database cu: $Database ..." -ForegroundColor Yellow
+Write-Host ""
+
+Write-Host `
+    "Dang xoa database cu: $Database ..." `
+    -ForegroundColor Yellow
 
 
-# Hai backtick `` để tạo dấu ` trong SQL.
+# ------------------------------------------------------------
+# Kết quả SQL:
 #
-# Kết quả:
 # DROP DATABASE IF EXISTS `lan_may_cafe`;
+#
+# Hai backtick `` trong PowerShell tạo một dấu `
+# ------------------------------------------------------------
 
 $DropSql = "DROP DATABASE IF EXISTS ``$Database``;"
 
@@ -550,7 +612,9 @@ if ($DropExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -569,10 +633,15 @@ Write-Success "Da xoa database cu."
 # 11.2 TẠO DATABASE MỚI
 # ============================================================
 
-Write-Host "Dang tao database moi: $Database ..." -ForegroundColor Yellow
+Write-Host ""
+
+Write-Host `
+    "Dang tao database moi: $Database ..." `
+    -ForegroundColor Yellow
 
 
-$CreateSql = "CREATE DATABASE ``$Database`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+$CreateSql = `
+    "CREATE DATABASE ``$Database`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 
 $CreateOutput = $CreateSql | & $MysqlExe `
@@ -592,7 +661,9 @@ if ($CreateExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -613,7 +684,9 @@ Write-Success "Da tao database: $Database"
 
 Write-Host ""
 
-Write-Host "Dang chay schema.sql..." -ForegroundColor Yellow
+Write-Host `
+    "Dang chay schema.sql..." `
+    -ForegroundColor Yellow
 
 
 $SchemaContent = Get-Content `
@@ -640,7 +713,9 @@ if ($SchemaExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -661,7 +736,9 @@ Write-Success "Chay schema.sql thanh cong."
 
 Write-Host ""
 
-Write-Host "Dang chay seed.sql..." -ForegroundColor Yellow
+Write-Host `
+    "Dang chay seed.sql..." `
+    -ForegroundColor Yellow
 
 
 $SeedContent = Get-Content `
@@ -688,7 +765,9 @@ if ($SeedExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -733,7 +812,9 @@ $ExpectedTables = @(
 
 Write-Host ""
 
-Write-Host "Dang kiem tra 9 bang..." -ForegroundColor Cyan
+Write-Host `
+    "Dang kiem tra 9 bang..." `
+    -ForegroundColor Cyan
 
 
 $TableSql = @"
@@ -765,7 +846,9 @@ if ($TableExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -802,12 +885,16 @@ foreach ($Line in $TableOutput) {
 
 Write-Host ""
 
-Write-Host "Cac bang hien co:" -ForegroundColor White
+Write-Host `
+    "Cac bang hien co:" `
+    -ForegroundColor White
 
 
 foreach ($TableName in $ActualTables) {
 
-    Write-Host "  - $TableName" -ForegroundColor Gray
+    Write-Host `
+        "  - $TableName" `
+        -ForegroundColor Gray
 }
 
 
@@ -821,12 +908,16 @@ if ($ActualTables.Count -ne 9) {
 
     Write-Host ""
 
-    Write-Host "Hien tai: $($ActualTables.Count) bang." -ForegroundColor Yellow
+    Write-Host `
+        "Hien tai: $($ActualTables.Count) bang." `
+        -ForegroundColor Yellow
 
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -856,18 +947,23 @@ foreach ($ExpectedTable in $ExpectedTables) {
 
 if ($MissingTables.Count -gt 0) {
 
-    Write-ErrorMessage "Thieu bang trong database:"
+    Write-ErrorMessage `
+        "Thieu bang trong database:"
 
 
     foreach ($MissingTable in $MissingTables) {
 
-        Write-Host "  - $MissingTable" -ForegroundColor Red
+        Write-Host `
+            "  - $MissingTable" `
+            -ForegroundColor Red
     }
 
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -888,15 +984,21 @@ Write-Success "Da tim thay day du 9 bang."
 
 Write-Host ""
 
-Write-Host "Dang kiem tra du lieu seed..." -ForegroundColor Cyan
+Write-Host `
+    "Dang kiem tra du lieu seed..." `
+    -ForegroundColor Cyan
 
 
 foreach ($ExpectedTable in $ExpectedTables) {
 
-    # Hai backtick tạo tên table dạng:
-    # `nhan_vien`
+    # --------------------------------------------------------
+    # Kết quả SQL:
+    #
+    # SELECT COUNT(*) FROM `nhan_vien`;
+    # --------------------------------------------------------
 
-    $CountSql = "SELECT COUNT(*) FROM ``$ExpectedTable``;"
+    $CountSql = `
+        "SELECT COUNT(*) FROM ``$ExpectedTable``;"
 
 
     $CountOutput = $CountSql | & $MysqlExe `
@@ -914,7 +1016,8 @@ foreach ($ExpectedTable in $ExpectedTables) {
 
     if ($CountExitCode -ne 0) {
 
-        Write-WarningMessage "Khong doc duoc so luong bang $ExpectedTable"
+        Write-WarningMessage `
+            "Khong doc duoc so luong bang $ExpectedTable"
 
         continue
     }
@@ -937,7 +1040,9 @@ foreach ($ExpectedTable in $ExpectedTables) {
 
 Write-Host ""
 
-Write-Host "Dang kiem tra database $Database..." -ForegroundColor Cyan
+Write-Host `
+    "Dang kiem tra database $Database..." `
+    -ForegroundColor Cyan
 
 
 $DatabaseSql = @"
@@ -966,7 +1071,9 @@ if ($DatabaseExitCode -ne 0) {
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -980,12 +1087,15 @@ if ($DatabaseExitCode -ne 0) {
 
 if ("$DatabaseOutput".Trim() -ne $Database) {
 
-    Write-ErrorMessage "Database $Database khong ton tai."
+    Write-ErrorMessage `
+        "Database $Database khong ton tai."
 
 
     if ($null -eq $OldMysqlPwd) {
 
-        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+        Remove-Item `
+            Env:MYSQL_PWD `
+            -ErrorAction SilentlyContinue
     }
     else {
 
@@ -997,7 +1107,8 @@ if ("$DatabaseOutput".Trim() -ne $Database) {
 }
 
 
-Write-Success "Database $Database dang hoat dong."
+Write-Success `
+    "Database $Database dang hoat dong."
 
 
 # ============================================================
@@ -1006,7 +1117,9 @@ Write-Success "Database $Database dang hoat dong."
 
 if ($null -eq $OldMysqlPwd) {
 
-    Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+    Remove-Item `
+        Env:MYSQL_PWD `
+        -ErrorAction SilentlyContinue
 }
 else {
 
@@ -1020,24 +1133,40 @@ else {
 
 Write-Host ""
 
-Write-Host "============================================================" -ForegroundColor Green
+Write-Host `
+    "============================================================" `
+    -ForegroundColor Green
 
-Write-Host "              RESET DATABASE THANH CONG" -ForegroundColor Green
+Write-Host `
+    "              RESET DATABASE THANH CONG" `
+    -ForegroundColor Green
 
-Write-Host "============================================================" -ForegroundColor Green
-
-Write-Host ""
-
-Write-Host "Database : $Database" -ForegroundColor White
-
-Write-Host "Host     : $DbHost" -ForegroundColor White
-
-Write-Host "Port     : $DbPort" -ForegroundColor White
-
-Write-Host "Tables   : 9" -ForegroundColor White
+Write-Host `
+    "============================================================" `
+    -ForegroundColor Green
 
 Write-Host ""
 
-Write-Host "Hoan tat." -ForegroundColor Green
+Write-Host `
+    "Database : $Database" `
+    -ForegroundColor White
+
+Write-Host `
+    "Host     : $DbHost" `
+    -ForegroundColor White
+
+Write-Host `
+    "Port     : $DbPort" `
+    -ForegroundColor White
+
+Write-Host `
+    "Tables   : 9" `
+    -ForegroundColor White
+
+Write-Host ""
+
+Write-Host `
+    "Hoan tat." `
+    -ForegroundColor Green
 
 Write-Host ""
