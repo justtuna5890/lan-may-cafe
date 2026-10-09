@@ -3,6 +3,7 @@ const OrderController = require('../controllers/OrderController');
 const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
 const kdsRealtime = require('../realtime/kds');
+const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
 
 const { verifyToken, requireRole } = require('../middlewares/auth');
@@ -11,6 +12,12 @@ const router = express.Router();
 
 router.get('/health', (req, res) => ok(res, { status: 'up' }));
 
+// UC21
+router.post('/auth/login', AuthController.dangNhap);
+
+// UC21 (khong can token)
+router.post('/auth/login', AuthController.dangNhap);
+
 // UC01
 router.post('/orders', OrderController.taoOrder);
 
@@ -18,11 +25,7 @@ router.post('/orders', OrderController.taoOrder);
 router.get('/orders/:id/invoice', PaymentController.layHoaDon);
 router.post('/payments', PaymentController.thanhToan);
 
-// =====================================================
-// KDS - Realtime
-// Phần của Xuân An
-// =====================================================
-
+// ==============================================
 router.get(
     '/kds/stream',
     verifyToken,
