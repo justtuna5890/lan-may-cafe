@@ -5,11 +5,11 @@ const KitchenController = require('../controllers/KitchenController');
 const kdsRealtime = require('../realtime/kds');
 const { ok } = require('../utils/response');
 
-const { verifyToken, requireRole } = require('../middlewares/auth');
-
 const router = express.Router();
 
-router.get('/health', (req, res) => ok(res, { status: 'up' }));
+router.get('/health', (req, res) =>
+    ok(res, { status: 'up' })
+);
 
 // UC01
 router.post('/orders', OrderController.taoOrder);
@@ -25,23 +25,33 @@ router.post('/payments', PaymentController.thanhToan);
 
 router.get(
     '/kds/stream',
-    verifyToken,
-    requireRole('BARISTA', 'CHU_QUAN'),
     kdsRealtime.subscribeKDS
 );
 
 // =====================================================
 // UC15 - Lấy danh sách món cho KDS
-// Phần của Xuân An
 // =====================================================
 
 router.get(
     '/kitchen/items',
-    verifyToken,
-    requireRole('BARISTA'),
     KitchenController.layDanhSachMon
 );
 
-// TODO: UC04 PATCH /orders/:id/items, UC16/18 (bep), UC21 /auth/login
+// =====================================================
+// UC16 - Cập nhật trạng thái chế biến
+// =====================================================
+
+router.patch(
+    '/kitchen/items/:chiTietId/status',
+    KitchenController.capNhatTrangThaiMon
+);
+
+// UC16 - Hoàn tác trạng thái
+router.post(
+    '/kitchen/items/:chiTietId/undo',
+    KitchenController.hoanTacTrangThaiMon
+);
+
+// TODO: UC04 PATCH /orders/:id/items, UC18 (bếp), UC21 /auth/login
 
 module.exports = router;
