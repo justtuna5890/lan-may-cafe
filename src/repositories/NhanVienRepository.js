@@ -1,10 +1,11 @@
+const bcrypt = require('bcrypt');
 const { pool } = require('../config/db');
 
 class NhanVienRepository {
 
     // Tìm nhân viên theo ID
-    static async findById(id) {
-        const [rows] = await pool.query(
+    static async findById(id, conn = pool) {
+        const [rows] = await conn.query(
             `
             SELECT
                 id,
@@ -25,8 +26,8 @@ class NhanVienRepository {
     }
 
     // Tìm nhân viên theo username
-    static async findByUsername(username) {
-        const [rows] = await pool.query(
+    static async findByUsername(username, conn = pool) {
+        const [rows] = await conn.query(
             `
             SELECT
                 id,
@@ -47,26 +48,14 @@ class NhanVienRepository {
     }
 
     // Kiểm tra đăng nhập
-    static async dangNhap(username, matKhau) {
-        const [rows] = await pool.query(
-            `
-            SELECT
-                id,
-                username,
-                mat_khau AS matKhau,
-                ho_ten AS hoTen,
-                vai_tro AS vaiTro,
-                trang_thai AS trangThai,
-                so_lan_sai AS soLanSai
-            FROM nhan_vien
-            WHERE username = ?
-              AND mat_khau = ?
-            LIMIT 1
-            `,
-            [username, matKhau]
-        );
+    static async dangNhap(username, matKhau, conn = pool) {
+        const nhanVien = await this.findByUsername(username, conn);
+        if (!nhanVien) {
+            return null;
+        }
 
-        return rows.length > 0 ? rows[0] : null;
+        const dungMatKhau = await bcrypt.compare(matKhau, nhanVien.matKhau);
+        return dungMatKhau ? nhanVien : null;
     }
 }
 

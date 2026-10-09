@@ -1,13 +1,10 @@
-const { pool, withTransaction } = require('../config/db');
+const { withTransaction } = require('../config/db');
 const AppError = require('../utils/AppError');
-const {
-    broadcastOrderUpdated
-} = require('../realtime/kds');
+const { broadcastOrderUpdated } = require('../realtime/kds');
 const ChiTietDonRepository = require('../repositories/ChiTietDonRepository');
 const DonHangRepository = require('../repositories/DonHangRepository');
 
 class KitchenService {
-
     // =========================================================
     // UC15 - Lấy danh sách món cho KDS
     // =========================================================
@@ -33,12 +30,7 @@ class KitchenService {
     // UC16 - Cập nhật trạng thái món
     // =========================================================
     static async updateItemStatus(chiTietId, trangThaiMoi) {
-
-        const result = await withTransaction(async (connection) => {
-
-            // -------------------------------------------------
-            // 1. Lấy món và khóa dòng
-            // -------------------------------------------------
+        const result = await withTransaction(async connection => {
             const item =
                 await ChiTietDonRepository.findByIdForUpdate(
                     connection,
@@ -53,9 +45,6 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 2. Không cho thao tác món đã hủy
-            // -------------------------------------------------
             if (item.trangThaiCheBien === 'DA_HUY') {
                 throw new AppError(
                     'MON_DA_HUY',
@@ -64,19 +53,11 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 3. Kiểm tra chuyển trạng thái hợp lệ
-            // -------------------------------------------------
             const transitionHopLe =
-                (
-                    item.trangThaiCheBien === 'CHO_PHA_CHE' &&
-                    trangThaiMoi === 'DANG_LAM'
-                )
-                ||
-                (
-                    item.trangThaiCheBien === 'DANG_LAM' &&
-                    trangThaiMoi === 'DA_XONG'
-                );
+                (item.trangThaiCheBien === 'CHO_PHA_CHE' &&
+                    trangThaiMoi === 'DANG_LAM') ||
+                (item.trangThaiCheBien === 'DANG_LAM' &&
+                    trangThaiMoi === 'DA_XONG');
 
             if (!transitionHopLe) {
                 throw new AppError(
@@ -86,18 +67,12 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 4. Cập nhật trạng thái món
-            // -------------------------------------------------
             await ChiTietDonRepository.capNhatTrangThaiWithConnection(
                 connection,
                 chiTietId,
                 trangThaiMoi
             );
 
-            // -------------------------------------------------
-            // 5. Kiểm tra toàn bộ món trong đơn
-            // -------------------------------------------------
             const itemsInOrder =
                 await ChiTietDonRepository.findTrangThaiByDonHangId(
                     connection,
@@ -117,11 +92,11 @@ class KitchenService {
             let trangThaiDonMoi = item.trangThaiDon;
 
             if (tatCaDaXong) {
-
+                // Chữ ký DonHangRepository: (id, status, conn)
                 await DonHangRepository.capNhatTrangThaiWithConnection(
-                    connection,
                     item.donHangId,
-                    'HOAN_THANH'
+                    'HOAN_THANH',
+                    connection
                 );
 
                 trangThaiDonMoi = 'HOAN_THANH';
@@ -135,24 +110,17 @@ class KitchenService {
             };
         });
 
-        // -----------------------------------------------------
-        // 6. Broadcast SAU KHI transaction commit
-        // -----------------------------------------------------
+        // Chỉ phát sự kiện sau khi transaction hoàn tất thành công.
         broadcastOrderUpdated(result);
 
         return result;
     }
 
     // =========================================================
-    // UC16 - Undo trạng thái món
+    // UC16 - Hoàn tác trạng thái món
     // =========================================================
     static async undoItemStatus(chiTietId) {
-
-        const result = await withTransaction(async (connection) => {
-
-            // -------------------------------------------------
-            // 1. Lấy món và khóa dòng
-            // -------------------------------------------------
+        const result = await withTransaction(async connection => {
             const item =
                 await ChiTietDonRepository.findByIdForUpdate(
                     connection,
@@ -167,9 +135,6 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 2. Không undo món đã hủy
-            // -------------------------------------------------
             if (item.trangThaiCheBien === 'DA_HUY') {
                 throw new AppError(
                     'MON_DA_HUY',
@@ -178,18 +143,13 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 3. Xác định trạng thái quay lại
-            // -------------------------------------------------
             let trangThaiMoi;
 
             if (item.trangThaiCheBien === 'DA_XONG') {
                 trangThaiMoi = 'DANG_LAM';
-            }
-            else if (item.trangThaiCheBien === 'DANG_LAM') {
+            } else if (item.trangThaiCheBien === 'DANG_LAM') {
                 trangThaiMoi = 'CHO_PHA_CHE';
-            }
-            else {
+            } else {
                 throw new AppError(
                     'KHONG_THE_HOAN_TAC',
                     'Không thể hoàn tác trạng thái hiện tại',
@@ -197,27 +157,20 @@ class KitchenService {
                 );
             }
 
-            // -------------------------------------------------
-            // 4. Cập nhật trạng thái món
-            // -------------------------------------------------
             await ChiTietDonRepository.capNhatTrangThaiWithConnection(
                 connection,
                 chiTietId,
                 trangThaiMoi
             );
 
-            // -------------------------------------------------
-            // 5. Nếu order đã HOAN_THANH nhưng undo món
-            //    thì đưa order về DANG_PHUC_VU
-            // -------------------------------------------------
             let trangThaiDonMoi = item.trangThaiDon;
 
             if (item.trangThaiDon === 'HOAN_THANH') {
-
+                // Chữ ký DonHangRepository: (id, status, conn)
                 await DonHangRepository.capNhatTrangThaiWithConnection(
-                    connection,
                     item.donHangId,
-                    'DANG_PHUC_VU'
+                    'DANG_PHUC_VU',
+                    connection
                 );
 
                 trangThaiDonMoi = 'DANG_PHUC_VU';
@@ -231,12 +184,10 @@ class KitchenService {
             };
         });
 
-        // -----------------------------------------------------
-        // 6. Broadcast SAU transaction
-        // -----------------------------------------------------
         broadcastOrderUpdated(result);
 
         return result;
     }
 }
+
 module.exports = KitchenService;
