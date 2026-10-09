@@ -3,7 +3,9 @@ const { ok } = require('../utils/response');
 
 class KitchenController {
 
-    // UC15
+    // =====================================================
+    // UC15 - Lấy danh sách món cho KDS
+    // =====================================================
     static async layDanhSachMon(req, res, next) {
         try {
             const data = await KitchenService.getKitchenItems();

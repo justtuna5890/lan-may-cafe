@@ -36,22 +36,6 @@ router.get(
     '/kitchen/items',
     KitchenController.layDanhSachMon
 );
-
-// =====================================================
-// UC16 - Cập nhật trạng thái chế biến
-// =====================================================
-
-router.patch(
-    '/kitchen/items/:chiTietId/status',
-    KitchenController.capNhatTrangThaiMon
-);
-
-// UC16 - Hoàn tác trạng thái
-router.post(
-    '/kitchen/items/:chiTietId/undo',
-    KitchenController.hoanTacTrangThaiMon
-);
-
 // TODO: UC04 PATCH /orders/:id/items, UC18 (bếp), UC21 /auth/login
 
 module.exports = router;

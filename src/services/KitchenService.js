@@ -1,8 +1,3 @@
-const { pool, withTransaction } = require('../config/db');
-const AppError = require('../utils/AppError');
-const {
-    broadcastOrderUpdated
-} = require('../realtime/kds');
 const ChiTietDonRepository = require('../repositories/ChiTietDonRepository');
 
 class KitchenService {
