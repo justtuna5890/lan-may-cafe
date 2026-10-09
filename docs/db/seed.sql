@@ -1,15 +1,17 @@
 -- ============================================================
 -- LÀN MÂY CAFE
 -- A2 - SEED DATA
+-- MySQL 8.0
+-- Phù hợp với schema.sql đã bổ sung is_synced và ngay_tao
 -- ============================================================
 USE lan_may_cafe;
 
 SET
-    FOREIGN_KEY_CHECKS = 0;
+    NAMES utf8mb4;
 
 -- ============================================================
 -- 1. NHAN_VIEN
--- Password test: 123456
+-- Password test dự kiến: 123456
 -- ============================================================
 INSERT INTO
     nhan_vien (
@@ -25,7 +27,7 @@ VALUES
     (
         'nv-001',
         'phucvu01',
-        '$2b$10$dykSIQRI/2SqqQjIZw.i9OPTd6RMywgkCxXt73030sLKC5kL6MWYK',
+        '$2b$10$VXnS585ISxsI7DldPj5RCu85dHUWJXM5PfRYELfkpHBa9IsIGFDe6',
         'Nguyễn Văn Phục Vụ',
         'PHUC_VU',
         'HOAT_DONG',
@@ -34,7 +36,7 @@ VALUES
     (
         'nv-002',
         'barista01',
-        '$2b$10$dykSIQRI/2SqqQjIZw.i9OPTd6RMywgkCxXt73030sLKC5kL6MWYK',
+        '$2b$10$VXnS585ISxsI7DldPj5RCu85dHUWJXM5PfRYELfkpHBa9IsIGFDe6',
         'Nguyễn Văn Barista',
         'BARISTA',
         'HOAT_DONG',
@@ -43,7 +45,7 @@ VALUES
     (
         'nv-003',
         'thungan01',
-        '$2b$10$dykSIQRI/2SqqQjIZw.i9OPTd6RMywgkCxXt73030sLKC5kL6MWYK',
+        '$2b$10$VXnS585ISxsI7DldPj5RCu85dHUWJXM5PfRYELfkpHBa9IsIGFDe6',
         'Nguyễn Văn Thu Ngân',
         'THU_NGAN',
         'HOAT_DONG',
@@ -52,7 +54,7 @@ VALUES
     (
         'nv-004',
         'chutquan01',
-        '$2b$10$dykSIQRI/2SqqQjIZw.i9OPTd6RMywgkCxXt73030sLKC5kL6MWYK',
+        '$2b$10$VXnS585ISxsI7DldPj5RCu85dHUWJXM5PfRYELfkpHBa9IsIGFDe6',
         'Nguyễn Văn Chủ Quán',
         'CHU_QUAN',
         'HOAT_DONG',
@@ -61,7 +63,7 @@ VALUES
     (
         'nv-005',
         'blocked01',
-        '$2b$10$dykSIQRI/2SqqQjIZw.i9OPTd6RMywgkCxXt73030sLKC5kL6MWYK',
+        '$2b$10$VXnS585ISxsI7DldPj5RCu85dHUWJXM5PfRYELfkpHBa9IsIGFDe6',
         'Nguyễn Văn Bị Khóa',
         'PHUC_VU',
         'BI_KHOA',
@@ -70,7 +72,7 @@ VALUES
 
 -- ============================================================
 -- 2. BAN
--- 12 bàn - đủ 4 trạng thái
+-- 12 bàn, có đủ 4 trạng thái
 -- ============================================================
 INSERT INTO
     ban (id, so_ban, trang_thai)
@@ -122,7 +124,7 @@ VALUES
 -- ============================================================
 -- 4. MON_AN
 -- 15 món
--- Bạc xỉu = TAM_HET
+-- Bạc xỉu đang tạm hết
 -- ============================================================
 INSERT INTO
     mon_an (id, ten_mon, gia, trang_thai)
@@ -145,8 +147,7 @@ VALUES
 
 -- ============================================================
 -- 5. KHO_HANG
--- 10 nguyên liệu
--- Có 1 nguyên liệu tồn kho = 0
+-- 10 nguyên liệu, kho-10 có tồn kho bằng 0
 -- ============================================================
 INSERT INTO
     kho_hang (id, ten_nguyen_lieu, don_vi_tinh, ton_kho)
@@ -206,7 +207,10 @@ VALUES
 
 -- ============================================================
 -- 7. DON_HANG
--- 4 đơn
+-- 4 đơn hàng
+-- is_synced:
+-- TRUE  = đã đồng bộ với KDS
+-- FALSE = chưa đồng bộ với KDS
 -- ============================================================
 INSERT INTO
     don_hang (
@@ -217,6 +221,7 @@ INSERT INTO
         tong_tien,
         tien_giam_gia,
         trang_thai,
+        is_synced,
         ngay_tao
     )
 VALUES
@@ -228,6 +233,7 @@ VALUES
         85000,
         0,
         'DANG_PHUC_VU',
+        TRUE,
         '2026-10-08 08:00:00'
     ),
     (
@@ -238,6 +244,7 @@ VALUES
         100000,
         0,
         'HOAN_THANH',
+        TRUE,
         '2026-10-08 08:15:00'
     ),
     (
@@ -248,6 +255,7 @@ VALUES
         60000,
         0,
         'DA_THANH_TOAN',
+        TRUE,
         '2026-10-08 08:30:00'
     ),
     (
@@ -258,11 +266,13 @@ VALUES
         70000,
         0,
         'DANG_PHUC_VU',
+        TRUE,
         '2026-10-08 08:45:00'
     );
 
 -- ============================================================
 -- 8. CHI_TIET_DON
+-- Có đủ trạng thái chế biến để kiểm thử UC15 / UC16
 -- ============================================================
 INSERT INTO
     chi_tiet_don (
@@ -272,7 +282,8 @@ INSERT INTO
         so_luong,
         don_gia,
         ghi_chu,
-        trang_thai_che_bien
+        trang_thai_che_bien,
+        ngay_tao
     )
 VALUES
     -- Đơn 001
@@ -283,7 +294,8 @@ VALUES
         2,
         30000,
         'Ít đá',
-        'DANG_LAM'
+        'DANG_LAM',
+        '2026-10-08 08:00:10'
     ),
     (
         'ct-002',
@@ -292,7 +304,8 @@ VALUES
         1,
         25000,
         'Không đường',
-        'CHO_PHA_CHE'
+        'CHO_PHA_CHE',
+        '2026-10-08 08:00:20'
     ),
     -- Đơn 002
     (
@@ -302,7 +315,8 @@ VALUES
         2,
         30000,
         NULL,
-        'DA_XONG'
+        'DA_XONG',
+        '2026-10-08 08:15:10'
     ),
     (
         'ct-004',
@@ -311,7 +325,8 @@ VALUES
         1,
         40000,
         'Ít ngọt',
-        'DA_XONG'
+        'DA_XONG',
+        '2026-10-08 08:15:20'
     ),
     -- Đơn 003
     -- Không sử dụng Bạc xỉu vì mon-03 đang TAM_HET
@@ -322,7 +337,8 @@ VALUES
         1,
         30000,
         NULL,
-        'DA_XONG'
+        'DA_XONG',
+        '2026-10-08 08:30:10'
     ),
     (
         'ct-006',
@@ -331,7 +347,8 @@ VALUES
         1,
         30000,
         NULL,
-        'DA_XONG'
+        'DA_XONG',
+        '2026-10-08 08:30:20'
     ),
     -- Đơn 004
     (
@@ -341,7 +358,8 @@ VALUES
         1,
         40000,
         NULL,
-        'DANG_LAM'
+        'DANG_LAM',
+        '2026-10-08 08:45:10'
     ),
     (
         'ct-008',
@@ -350,12 +368,13 @@ VALUES
         1,
         30000,
         'Khách đổi ý',
-        'DA_HUY'
+        'DA_HUY',
+        '2026-10-08 08:45:20'
     );
 
 -- ============================================================
 -- 9. THANH_TOAN
--- 1 đơn đã thanh toán
+-- Một giao dịch thanh toán thành công
 -- ============================================================
 INSERT INTO
     thanh_toan (
@@ -382,11 +401,8 @@ VALUES
         'nv-003'
     );
 
-SET
-    FOREIGN_KEY_CHECKS = 1;
-
 -- ============================================================
--- KIỂM TRA SỐ LƯỢNG
+-- KIỂM TRA SỐ LƯỢNG DỮ LIỆU
 -- ============================================================
 SELECT
     'nhan_vien' AS bang,
@@ -443,22 +459,66 @@ FROM
     cong_thuc_mon;
 
 -- ============================================================
--- KIỂM TRA RIÊNG DỮ LIỆU UC15 / UC16
+-- KIỂM TRA TRẠNG THÁI ĐỒNG BỘ ĐƠN HÀNG
 -- ============================================================
 SELECT
-    ct.id AS chi_tiet_id,
-    ct.don_hang_id,
-    d.ngay_tao,
-    b.so_ban,
-    m.ten_mon,
-    ct.so_luong,
-    ct.don_gia,
-    ct.trang_thai_che_bien
+    id AS donHangId,
+    trang_thai AS trangThai,
+    is_synced AS isSynced,
+    ngay_tao AS ngayTao
+FROM
+    don_hang
+ORDER BY
+    ngay_tao ASC;
+
+-- ============================================================
+-- KIỂM TRA RIÊNG DỮ LIỆU UC15 / UC16
+-- Sắp xếp theo thời gian tạo món (FIFO)
+-- ============================================================
+SELECT
+    ct.id AS chiTietId,
+    ct.don_hang_id AS donHangId,
+    d.is_synced AS isSynced,
+    d.ngay_tao AS ngayTaoDon,
+    ct.ngay_tao AS ngayTaoMon,
+    b.so_ban AS soBan,
+    m.id AS monId,
+    m.ten_mon AS tenMon,
+    ct.so_luong AS soLuong,
+    ct.don_gia AS donGia,
+    ct.ghi_chu AS ghiChu,
+    ct.trang_thai_che_bien AS trangThaiCheBien
 FROM
     chi_tiet_don ct
     JOIN don_hang d ON d.id = ct.don_hang_id
     JOIN mon_an m ON m.id = ct.mon_an_id
-    JOIN ban b ON b.id = d.ban_id
+    LEFT JOIN ban b ON b.id = d.ban_id
 ORDER BY
-    d.ngay_tao ASC,
+    ct.ngay_tao ASC,
     ct.id ASC;
+
+-- ============================================================
+-- KIỂM TRA NGUYÊN LIỆU CÓ TỒN KHO BẰNG 0
+-- ============================================================
+SELECT
+    id,
+    ten_nguyen_lieu,
+    don_vi_tinh,
+    ton_kho
+FROM
+    kho_hang
+WHERE
+    ton_kho = 0;
+
+-- ============================================================
+-- KIỂM TRA MÓN TẠM HẾT
+-- ============================================================
+SELECT
+    id,
+    ten_mon,
+    gia,
+    trang_thai
+FROM
+    mon_an
+WHERE
+    trang_thai = 'TAM_HET';

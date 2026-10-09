@@ -1,6 +1,7 @@
 -- ============================================================
 -- LÀN MÂY CAFE
--- A1 - DATABASE SCHEMA
+-- DATABASE SCHEMA
+-- MySQL 8.0
 -- 9 TABLES
 -- ============================================================
 DROP DATABASE IF EXISTS lan_may_cafe;
@@ -42,7 +43,8 @@ CREATE TABLE ban (
     trang_thai ENUM ('TRONG', 'DANG_PHUC_VU', 'CAN_DON', 'DAT_TRUOC') NOT NULL DEFAULT 'TRONG',
     ngay_cap_nhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_ban_so_ban (so_ban)
+    UNIQUE KEY uk_ban_so_ban (so_ban),
+    KEY idx_ban_trang_thai (trang_thai)
 ) ENGINE = InnoDB;
 
 -- ============================================================
@@ -69,12 +71,18 @@ CREATE TABLE don_hang (
     tong_tien DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     tien_giam_gia DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
     trang_thai ENUM ('DANG_PHUC_VU', 'HOAN_THANH', 'DA_THANH_TOAN') NOT NULL DEFAULT 'DANG_PHUC_VU',
+    -- FALSE: chưa đồng bộ thành công với KDS
+    -- TRUE: đã đồng bộ thành công với KDS
+    is_synced BOOLEAN NOT NULL DEFAULT FALSE,
     ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ngay_cap_nhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_don_hang_ban (ban_id),
     KEY idx_don_hang_khach_hang (khach_hang_id),
     KEY idx_don_hang_nhan_vien (nhan_vien_id),
+    KEY idx_don_hang_trang_thai (trang_thai),
+    KEY idx_don_hang_is_synced (is_synced),
+    KEY idx_don_hang_ban_trang_thai (ban_id, trang_thai),
     CONSTRAINT fk_don_hang_ban FOREIGN KEY (ban_id) REFERENCES ban (id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT fk_don_hang_khach_hang FOREIGN KEY (khach_hang_id) REFERENCES khach_hang (id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT fk_don_hang_nhan_vien FOREIGN KEY (nhan_vien_id) REFERENCES nhan_vien (id) ON UPDATE CASCADE ON DELETE SET NULL,
@@ -91,6 +99,7 @@ CREATE TABLE mon_an (
     gia DECIMAL(12, 2) NOT NULL,
     trang_thai ENUM ('CON_HANG', 'TAM_HET') NOT NULL DEFAULT 'CON_HANG',
     PRIMARY KEY (id),
+    KEY idx_mon_an_trang_thai (trang_thai),
     CONSTRAINT chk_mon_an_gia CHECK (gia >= 0)
 ) ENGINE = InnoDB;
 
@@ -105,9 +114,13 @@ CREATE TABLE chi_tiet_don (
     don_gia DECIMAL(12, 2) NOT NULL,
     ghi_chu VARCHAR(255) NULL,
     trang_thai_che_bien ENUM ('CHO_PHA_CHE', 'DANG_LAM', 'DA_XONG', 'DA_HUY') NOT NULL DEFAULT 'CHO_PHA_CHE',
+    -- Thời điểm món được thêm vào đơn
+    ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_ctd_don_hang (don_hang_id),
     KEY idx_ctd_mon_an (mon_an_id),
+    KEY idx_ctd_trang_thai_ngay_tao (trang_thai_che_bien, ngay_tao),
+    KEY idx_ctd_don_trang_thai (don_hang_id, trang_thai_che_bien),
     CONSTRAINT fk_ctd_don_hang FOREIGN KEY (don_hang_id) REFERENCES don_hang (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_ctd_mon_an FOREIGN KEY (mon_an_id) REFERENCES mon_an (id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_ctd_so_luong CHECK (so_luong > 0),
@@ -132,6 +145,7 @@ CREATE TABLE thanh_toan (
     UNIQUE KEY uk_thanh_toan_ma_giao_dich (ma_giao_dich),
     KEY idx_thanh_toan_don_hang (don_hang_id),
     KEY idx_thanh_toan_nhan_vien (nhan_vien_id),
+    KEY idx_thanh_toan_trang_thai (trang_thai),
     CONSTRAINT fk_thanh_toan_don_hang FOREIGN KEY (don_hang_id) REFERENCES don_hang (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_thanh_toan_nhan_vien FOREIGN KEY (nhan_vien_id) REFERENCES nhan_vien (id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_thanh_toan_so_tien CHECK (so_tien >= 0),
@@ -167,10 +181,17 @@ CREATE TABLE cong_thuc_mon (
     CONSTRAINT chk_ctm_so_luong CHECK (so_luong > 0)
 ) ENGINE = InnoDB;
 
+-- ============================================================
+-- HOÀN TẤT
+-- ============================================================
 SET
     FOREIGN_KEY_CHECKS = 1;
 
--- ============================================================
--- KIỂM TRA
--- ============================================================
 SHOW TABLES;
+
+-- Kiểm tra cấu trúc các bảng đã điều chỉnh
+DESCRIBE don_hang;
+
+DESCRIBE chi_tiet_don;
+
+DESCRIBE thanh_toan;
