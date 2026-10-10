@@ -12,7 +12,7 @@ const Phien = (() => {
   // Menu theo vai tro: moi vai tro chi thay chuc nang cua minh
   const MENU = {
     PHUC_VU: [['/tables.html', 'Sơ đồ bàn']],
-    BARISTA: [['/kitchen.html', 'Màn bếp']],
+    BARISTA: [['/kitchen.html', 'Màn bếp'], ['/kho.html', 'Quản lý kho']],
     THU_NGAN: [['/pos.html', 'Thu ngân']],
     // API chi cho dung vai tro (api-contract, tests/phanquyen.test.js): chu quan khong vao man cua vai tro khac
     CHU_QUAN: [['/dashboard.html', 'Tổng quan']],
