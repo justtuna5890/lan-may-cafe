@@ -21,7 +21,7 @@ describe('khung he thong', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data).toMatchObject({
       nhanVienId: 'nv-001',
-      hoTen: 'Nguyễn Văn A',
+      hoTen: 'Nguyễn Văn Phục Vụ',
       vaiTro: 'PHUC_VU',
       trangChu: '/tables.html'
     });

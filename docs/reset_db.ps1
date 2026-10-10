@@ -35,6 +35,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Pipe UTF-8 sang mysql.exe (PowerShell 5.1 mac dinh ASCII, lam tieng Viet thanh dau ?)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 
 # ============================================================
 # 1. XÁC ĐỊNH ĐƯỜNG DẪN PROJECT
@@ -618,11 +621,13 @@ Write-Host "Dang chay schema.sql..." -ForegroundColor Yellow
 
 $SchemaContent = Get-Content `
     -LiteralPath $SchemaFile `
+    -Encoding UTF8 `
     -Raw `
     -ErrorAction Stop
 
 
 $SchemaOutput = $SchemaContent | & $MysqlExe `
+            "--default-character-set=utf8mb4" `
     "-h" $DbHost `
     "-P" "$DbPort" `
     "-u" $DbUser `
@@ -666,11 +671,13 @@ Write-Host "Dang chay seed.sql..." -ForegroundColor Yellow
 
 $SeedContent = Get-Content `
     -LiteralPath $SeedFile `
+    -Encoding UTF8 `
     -Raw `
     -ErrorAction Stop
 
 
 $SeedOutput = $SeedContent | & $MysqlExe `
+            "--default-character-set=utf8mb4" `
     "-h" $DbHost `
     "-P" "$DbPort" `
     "-u" $DbUser `
