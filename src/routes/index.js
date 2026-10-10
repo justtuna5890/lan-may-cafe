@@ -1,13 +1,18 @@
+
 const express = require('express');
 const OrderController = require('../controllers/OrderController');
 const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
+const KhoHangController = require('../controllers/KhoHangController');
 const kdsRealtime = require('../realtime/kds');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
 
 const router = express.Router();
 
+// =====================================================
+// HEALTH CHECK
+// =====================================================
 router.get('/health', (req, res) =>
     ok(res, { status: 'up' })
 );
@@ -29,39 +34,64 @@ router.get('/orders/:id/invoice', PaymentController.layHoaDon);
 router.post('/payments', PaymentController.thanhToan);
 
 // =====================================================
-// KDS - Realtime
-// Phần của Xuân An
+// KDS - REALTIME
 // =====================================================
-
-router.get(
-    '/kds/stream',
-    kdsRealtime.subscribeKDS
-);
+router.get('/kds/stream', kdsRealtime.subscribeKDS);
 
 // =====================================================
-// UC15 - Lấy danh sách món cho KDS
+// UC15 - LẤY DANH SÁCH MÓN CHO KDS
 // =====================================================
-
-router.get(
-    '/kitchen/items',
-    KitchenController.layDanhSachMon
-);
+router.get('/kitchen/items', KitchenController.layDanhSachMon);
 
 // =====================================================
-// UC16 - Cập nhật trạng thái chế biến
+// UC16 - CẬP NHẬT TRẠNG THÁI CHẾ BIẾN
 // =====================================================
-
 router.patch(
     '/kitchen/items/:chiTietId/status',
     KitchenController.capNhatTrangThaiMon
 );
 
-// UC16 - Hoàn tác trạng thái
 router.post(
     '/kitchen/items/:chiTietId/undo',
     KitchenController.hoanTacTrangThaiMon
 );
 
-// TODO: UC04 PATCH /orders/:id/items, UC18 (bếp), UC21 /auth/login
+// =====================================================
+// UC18 - QUẢN LÝ KHO HÀNG
+// =====================================================
+
+// Lấy danh sách nguyên liệu
+router.get(
+    '/inventory',
+    KhoHangController.layDanhSachNguyenLieu
+);
+
+// Lấy chi tiết nguyên liệu
+router.get(
+    '/inventory/:id',
+    KhoHangController.layNguyenLieuTheoId
+);
+
+// Đánh dấu nguyên liệu hết hàng
+router.patch(
+    '/inventory/:id/out-of-stock',
+    KhoHangController.danhDauHetHang
+);
+
+// Nhập thêm nguyên liệu
+router.post(
+    '/inventory/:id/restock',
+    KhoHangController.nhapKho
+);
+
+// Xuất nguyên liệu
+router.post(
+    '/inventory/:id/issue',
+    KhoHangController.xuatKho
+);
+
+// =====================================================
+// TODO: UC04 PATCH /orders/:id/items, UC21 /auth/login
+// =====================================================
 
 module.exports = router;
