@@ -7,7 +7,7 @@
   const el = {};
 
   function khoiTao() {
-    const phien = Phien.yeuCau('BARISTA', 'CHU_QUAN');
+    const phien = Phien.yeuCau('BARISTA');
     if (!phien) return;
     ['danh-sach-mon', 'loi-kds', 'trang-thai-ket-noi', 'thoi-diem-cap-nhat', 'dem-cho', 'dem-dang-lam', 'dem-tat-ca', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));
@@ -92,7 +92,7 @@
 
   function ketNoiRealtime() {
     if (!('EventSource' in window)) { datKetNoi('Trình duyệt không hỗ trợ cập nhật trực tiếp', false); return; }
-    state.eventSource = new EventSource('/api/kds/stream');
+    state.eventSource = new EventSource(`/api/kds/stream?token=${encodeURIComponent(Phien.token() || '')}`);
     state.eventSource.addEventListener('connected', () => datKetNoi('Đã kết nối trực tiếp', true));
     ['new-order', 'order-updated', 'item-cancelled'].forEach((eventName) => state.eventSource.addEventListener(eventName, () => taiDanhSach(true)));
     state.eventSource.onerror = () => datKetNoi('Mất kết nối trực tiếp — đang thử lại', false);

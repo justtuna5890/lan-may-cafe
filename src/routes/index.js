@@ -7,7 +7,7 @@ const KhoHangController = require('../controllers/KhoHangController');
 const kdsRealtime = require('../realtime/kds');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
-const { verifyToken, requireRole } = require('../middlewares/auth');
+const { verifyToken, requireRole, tokenTuQuery } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -25,6 +25,7 @@ router.post('/auth/login', AuthController.dangNhap);
 const phucVu = [verifyToken, requireRole('PHUC_VU')];
 const thuNgan = [verifyToken, requireRole('THU_NGAN')];
 const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN')];
+const barista = [verifyToken, requireRole('BARISTA')];
 
 // Ho tro giao dien
 router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
@@ -47,23 +48,25 @@ router.post('/payments', ...thuNgan, PaymentController.thanhToan);
 // =====================================================
 // KDS - REALTIME
 // =====================================================
-router.get('/kds/stream', kdsRealtime.subscribeKDS);
+router.get('/kds/stream', tokenTuQuery, ...barista, kdsRealtime.subscribeKDS);
 
 // =====================================================
 // UC15 - LẤY DANH SÁCH MÓN CHO KDS
 // =====================================================
-router.get('/kitchen/items', KitchenController.layDanhSachMon);
+router.get('/kitchen/items', ...barista, KitchenController.layDanhSachMon);
 
 // =====================================================
 // UC16 - CẬP NHẬT TRẠNG THÁI CHẾ BIẾN
 // =====================================================
 router.patch(
     '/kitchen/items/:chiTietId/status',
+    ...barista,
     KitchenController.capNhatTrangThaiMon
 );
 
 router.post(
     '/kitchen/items/:chiTietId/undo',
+    ...barista,
     KitchenController.hoanTacTrangThaiMon
 );
 
@@ -74,35 +77,37 @@ router.post(
 // Lấy danh sách nguyên liệu
 router.get(
     '/inventory',
+    ...barista,
     KhoHangController.layDanhSachNguyenLieu
 );
 
 // Lấy chi tiết nguyên liệu
 router.get(
     '/inventory/:id',
+    ...barista,
     KhoHangController.layNguyenLieuTheoId
 );
 
 // Đánh dấu nguyên liệu hết hàng
 router.patch(
     '/inventory/:id/out-of-stock',
+    ...barista,
     KhoHangController.danhDauHetHang
 );
 
 // Nhập thêm nguyên liệu
 router.post(
     '/inventory/:id/restock',
+    ...barista,
     KhoHangController.nhapKho
 );
 
 // Xuất nguyên liệu
 router.post(
     '/inventory/:id/issue',
+    ...barista,
     KhoHangController.xuatKho
 );
 
-// =====================================================
-// TODO: UC04 PATCH /orders/:id/items, UC21 /auth/login
-// =====================================================
 
 module.exports = router;
