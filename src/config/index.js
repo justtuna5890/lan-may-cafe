@@ -11,4 +11,9 @@ module.exports = {
     database: process.env.DB_NAME || 'lan_may_cafe',
   },
   kdsTimeoutMs: Number(process.env.KDS_TIMEOUT_MS) || 5000,
+  // UC21: khoa ky token dang nhap (JWT). May that phai dat JWT_SECRET trong .env
+  jwt: {
+    secret: process.env.JWT_SECRET || 'lan-may-dev-secret',
+    expiresIn: process.env.JWT_EXPIRES_IN || '12h',
+  },
 };

@@ -3,6 +3,7 @@ const OrderController = require('../controllers/OrderController');
 const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
 const kdsRealtime = require('../realtime/kds');
+const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
 
 const router = express.Router();
@@ -10,6 +11,9 @@ const router = express.Router();
 router.get('/health', (req, res) =>
     ok(res, { status: 'up' })
 );
+
+// UC21 (khong can token)
+router.post('/auth/login', AuthController.dangNhap);
 
 // UC01
 router.post('/orders', OrderController.taoOrder);
