@@ -2,6 +2,7 @@
   const TRANG_THAI = {
     CHO_PHA_CHE: { nhan: 'Chờ pha chế', nut: 'Bắt đầu pha', tiepTheo: 'DANG_LAM' },
     DANG_LAM: { nhan: 'Đang pha chế', nut: 'Hoàn thành', tiepTheo: 'DA_XONG' },
+    DA_XONG: { nhan: 'Hoàn thành' },
   };
   const state = { items: [], loc: 'TAT_CA', tuKhoa: '', dangCapNhat: new Set(), eventSource: null };
   const el = {};
