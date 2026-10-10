@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thu ngân - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .bo-cuc-pos { display: grid; gap: 1rem; }
+    @media (min-width: 60em) { .bo-cuc-pos { grid-template-columns: 1fr 28rem; align-items: start; } .cot-hoa-don { position: sticky; top: 1rem; } }
+    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+
+    /* Hoa don */
+    .bang-hd { width: 100%; border-collapse: collapse; margin-bottom: .5rem; font-size: .95rem; }
+    .bang-hd caption { text-align: left; color: var(--muted); font-size: .9rem; margin-bottom: .5rem; }
+    .bang-hd th, .bang-hd td { padding: .45rem .25rem; border-bottom: 1px solid var(--line-nhat); text-align: right; }
+    .bang-hd th:first-child, .bang-hd td:first-child { text-align: left; }
+    .bang-hd thead th { color: var(--muted); font-size: .85rem; }
+
+    /* Popup thanh toan */
+    dialog.popup-thanh-toan { width: min(30rem, calc(100vw - 2rem)); }
+    .can-tra { font-size: 1.6rem; font-weight: 700; color: var(--brand); display: block; }
+    .chon-pt { border: none; padding: 0; margin: 0 0 1rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+    .chon-pt legend { font-size: .9rem; color: var(--muted); font-weight: 600; margin-bottom: .3rem; padding: 0; }
+    .chon-pt label { flex: 1 1 8rem; display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem .75rem; border: 2px solid var(--line-nhat); border-radius: var(--bo-goc); cursor: pointer; font-weight: 700; }
+    .chon-pt label:has(input:checked) { border-color: var(--brand); background: #FFF6EE; }
+    .goi-y-tien { display: flex; gap: .4rem; flex-wrap: wrap; margin: -.5rem 0 1rem; }
+    .qr-gia { width: 11rem; height: 11rem; margin: 0 auto .75rem; padding: .5rem; background: #fff; border: 2px solid var(--line-nhat); border-radius: 8px; }
+    .qr-gia svg { width: 100%; height: 100%; display: block; }
+    #khu-qr p { text-align: center; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <header class="top"></header>
+
+  <main class="page" id="noi-dung">
+    <div class="dau-trang">
+      <h1>Thu ngân</h1>
+      <button type="button" class="btn btn-nho day-phai" id="nut-tai-lai">Tải lại</button>
+    </div>
+
+    <div class="bo-cuc-pos">
+      <section class="the" aria-labelledby="tieu-de-ban">
+        <h2 id="tieu-de-ban">Bàn đang phục vụ</h2>
+        <div id="ds-ban"></div>
+      </section>
+
+      <div class="cot-hoa-don">
+        <!-- UC08: hoa don theo ban (HoaDonDTO) -->
+        <section class="the" aria-labelledby="tieu-de-hoa-don" aria-live="polite">
+          <h2 id="tieu-de-hoa-don">Hóa đơn</h2>
+          <div id="khu-hoa-don"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- UC10: popup thanh toan theo SD_ThanhToan -->
+  <dialog class="popup popup-thanh-toan" id="popup-tt" aria-labelledby="tt-tieu-de">
+    <form id="form-tt" novalidate>
+      <h2 id="tt-tieu-de">Thanh toán</h2>
+      <p>Cần thanh toán <span class="can-tra" id="tt-can-tra"></span></p>
+
+      <fieldset class="chon-pt">
+        <legend>Phương thức thanh toán</legend>
+        <label><input type="radio" name="phuongThuc" value="TIEN_MAT" checked> Tiền mặt</label>
+        <label><input type="radio" name="phuongThuc" value="QR"> Chuyển khoản QR</label>
+      </fieldset>
+
+      <div id="khu-tien-mat">
+        <div class="truong">
+          <label for="tien-khach-dua">Tiền khách đưa (đ)</label>
+          <input type="number" id="tien-khach-dua" min="0" step="1000" inputmode="numeric" aria-describedby="loi-tien-khach-dua">
+          <p class="loi-o" id="loi-tien-khach-dua"></p>
+        </div>
+        <div class="goi-y-tien" id="goi-y-tien" aria-label="Chọn nhanh số tiền"></div>
+        <div class="dong-tien lon"><span>Tiền thối</span><span id="tt-tien-thoi">0đ</span></div>
+      </div>
+
+      <div id="khu-qr" class="an">
+        <div class="qr-gia" id="qr-gia" role="img" aria-label="Mã QR thanh toán (giả lập)"></div>
+        <p>Khách quét mã để chuyển <strong id="tt-qr-so-tien"></strong>.<br>QR giả lập: bấm xác nhận khi khách đã chuyển xong.</p>
+      </div>
+
+      <p class="hop-loi an" id="tt-loi" role="alert"></p>
+      <p class="goi-y">Mã giao dịch: <span id="tt-ma-gd"></span></p>
+      <div class="hang-nut">
+        <button type="button" class="btn" id="tt-nut-huy">Hủy</button>
+        <button type="submit" class="btn btn-chinh" id="tt-nut-xac-nhan">Xác nhận thanh toán</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/thu-ngan.js"></script>
+</body>
+</html>
