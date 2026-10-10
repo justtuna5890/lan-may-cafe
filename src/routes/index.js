@@ -20,6 +20,11 @@ router.get('/health', (req, res) =>
 // UC21 (khong can token)
 router.post('/auth/login', AuthController.dangNhap);
 
+// Ho tro giao dien
+router.get('/tables', OrderController.layDanhSachBan);
+router.get('/menu', OrderController.layThucDon);
+router.get('/orders/:id', OrderController.layDon);
+
 // UC01
 router.post('/orders', OrderController.taoOrder);
 

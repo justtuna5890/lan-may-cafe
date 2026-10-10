@@ -13,6 +13,33 @@ class OrderController {
     }
   }
 
+  // Ho tro: so do ban
+  static async layDanhSachBan(req, res, next) {
+    try {
+      return ok(res, await OrderService.layDanhSachBan());
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  // Ho tro: thuc don
+  static async layThucDon(req, res, next) {
+    try {
+      return ok(res, await OrderService.layThucDon());
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  // Ho tro: xem don day du (hien trang thai tung mon)
+  static async layDon(req, res, next) {
+    try {
+      return ok(res, await OrderService.layDonDayDu(req.params.id));
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   // UC04 - goi them mon
   static async themMon(req, res, next) {
     try {

@@ -15,13 +15,6 @@ describe('khung he thong', () => {
     expect(res.body.maLoi).toBe('NOT_FOUND');
   });
 
-  test('UC chua cai dat tra ve 501 dung format', async () => {
-    // Repository chua cai dat (khung cho An) nen API tra 501; bo test nay khi co CSDL that
-    const res = await request(app).get('/api/orders/dh-001/invoice');
-    expect(res.status).toBe(501);
-    expect(res.body).toMatchObject({ success: false, maLoi: 'CHUA_CAI_DAT' });
-  });
-
   test('POST /api/auth/login dang nhap thanh cong', async () => {
     const res = await request(app).post('/api/auth/login').send({ username: 'phucvu01', password: '123456' });
     expect(res.status).toBe(200);

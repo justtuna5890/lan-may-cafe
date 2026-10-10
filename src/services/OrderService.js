@@ -99,6 +99,25 @@ class OrderService {
     return daLuu;
   }
 
+  // ---- Ho tro giao dien: so do ban, thuc don, xem don ----
+
+  static async layDanhSachBan() {
+    return BanRepository.findAll();
+  }
+
+  // Mon TAM_HET van tra ve de giao dien lam xam
+  static async layThucDon() {
+    const dsMon = await MonAnRepository.findAll();
+    return dsMon.map((m) => ({ monId: m.monId, tenMon: m.tenMon, gia: m.gia, trangThai: m.trangThai }));
+  }
+
+  static async layDonDayDu(donHangId) {
+    const don = await DonHangRepository.findById(donHangId);
+    if (!don) throw new AppError('DON_KHONG_TON_TAI', 'Khong tim thay don hang', 404);
+    const chiTiet = await DonHangRepository.findChiTietByDon(don.donHangId);
+    return OrderService.dungDonDayDu(don, chiTiet, don.tongTien, don.isSynced !== false);
+  }
+
   // ---- UC04: cap nhat order (goi them, sua, huy mon) ----
 
   // Don phai ton tai va chua thanh toan (TC-04-12)

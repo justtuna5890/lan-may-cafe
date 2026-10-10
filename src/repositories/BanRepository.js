@@ -1,6 +1,22 @@
 const { pool } = require('../config/db');
 
 class BanRepository {
+    // Danh sach ban cho so do ban (GET /tables)
+    static async findAll(conn = pool) {
+        const [rows] = await conn.query(
+            `
+      SELECT
+        id AS banId,
+        so_ban AS tenBan,
+        trang_thai AS trangThai
+      FROM ban
+      ORDER BY so_ban ASC
+      `
+        );
+
+        return rows;
+    }
+
     // Tìm bàn theo ID
     static async findById(id, conn = pool) {
         const [rows] = await conn.query(
