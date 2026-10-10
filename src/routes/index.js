@@ -7,6 +7,7 @@ const KhoHangController = require('../controllers/KhoHangController');
 const kdsRealtime = require('../realtime/kds');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
+const { verifyToken, requireRole } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -20,23 +21,28 @@ router.get('/health', (req, res) =>
 // UC21 (khong can token)
 router.post('/auth/login', AuthController.dangNhap);
 
+// Phan quyen theo api-contract: verifyToken (401) -> requireRole (403)
+const phucVu = [verifyToken, requireRole('PHUC_VU')];
+const thuNgan = [verifyToken, requireRole('THU_NGAN')];
+const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN')];
+
 // Ho tro giao dien
-router.get('/tables', OrderController.layDanhSachBan);
-router.get('/menu', OrderController.layThucDon);
-router.get('/orders/:id', OrderController.layDon);
+router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
+router.get('/menu', ...phucVu, OrderController.layThucDon);
+router.get('/orders/:id', ...phucVuHoacThuNgan, OrderController.layDon);
 
 // UC01
-router.post('/orders', OrderController.taoOrder);
+router.post('/orders', ...phucVu, OrderController.taoOrder);
 
 // UC04
-router.post('/orders/:id/items', OrderController.themMon);
-router.patch('/orders/:id/items/:chiTietId', OrderController.suaMon);
-router.delete('/orders/:id/items/:chiTietId', OrderController.huyMon);
+router.post('/orders/:id/items', ...phucVu, OrderController.themMon);
+router.patch('/orders/:id/items/:chiTietId', ...phucVu, OrderController.suaMon);
+router.delete('/orders/:id/items/:chiTietId', ...phucVu, OrderController.huyMon);
 
 // UC08, UC10
-router.get('/tables/:id/current-order', PaymentController.layDonHienTai);
-router.get('/orders/:id/invoice', PaymentController.layHoaDon);
-router.post('/payments', PaymentController.thanhToan);
+router.get('/tables/:id/current-order', ...phucVuHoacThuNgan, PaymentController.layDonHienTai);
+router.get('/orders/:id/invoice', ...thuNgan, PaymentController.layHoaDon);
+router.post('/payments', ...thuNgan, PaymentController.thanhToan);
 
 // =====================================================
 // KDS - REALTIME
