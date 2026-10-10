@@ -140,7 +140,10 @@ Chỉ thao tác được trên món đang `CHO_PHA_CHE`. Món `DANG_LAM` hoặc 
 | `MON_TRONG_DON_KHONG_TON_TAI` | 404 | Sai `chiTietId` |
 | `DON_DA_THANH_TOAN` | 409 | Đơn đã thanh toán |
 | `MON_DA_CHE_BIEN` | 409 | Món `DANG_LAM` hoặc `DA_XONG` |
-| `SO_LUONG_KHONG_HOP_LE`, `MON_TAM_HET` | 400, 409 | Như UC01 |
+| `MON_DA_HUY` | 409 | Sửa hoặc hủy món đã `DA_HUY` |
+| `SO_LUONG_KHONG_HOP_LE`, `MON_TAM_HET`, `DS_MON_RONG` | 400, 409, 400 | Như UC01 |
+
+Ghi chú: `dsMon` trong response gồm cả món `DA_HUY` (để giao diện hiện trạng thái), nhưng `tongTien` chỉ tính món chưa hủy. Đơn đang `HOAN_THANH` mà gọi thêm món thì quay lại `DANG_PHUC_VU`. Bếp không phản hồi sau 5 giây khi gọi thêm: vẫn lưu, `isSynced=false`.
 
 ### UC15 – Hiển thị danh sách đơn cho bếp
 
