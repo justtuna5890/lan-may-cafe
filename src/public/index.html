@@ -3,10 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lan May Cafe</title>
+  <title>Đăng nhập - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    body { background: var(--nen); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+    .the-dang-nhap { width: 100%; max-width: 24rem; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 6px 24px rgba(43, 27, 18, .08); }
+    .the-dang-nhap .logo { width: 3rem; height: 3rem; margin: 0 auto .75rem; }
+    .the-dang-nhap h1 { text-align: center; font-size: 1.3rem; margin: 0 0 1.25rem; }
+    .o-mat-khau { position: relative; }
+    .o-mat-khau input { padding-right: 4.5rem; }
+    .nut-hien { position: absolute; right: .3rem; top: 50%; transform: translateY(-50%); border: none; background: none; color: var(--brand); font-weight: 700; cursor: pointer; min-height: 2.25rem; padding: 0 .5rem; }
+    .ghi-nho { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; font-size: .95rem; min-height: 2.75rem; }
+    .ghi-nho input { width: 1.2rem; height: 1.2rem; }
+    .quen { display: block; margin: .75rem auto 0; background: none; border: none; color: var(--brand); text-decoration: underline; cursor: pointer; min-height: 2.75rem; }
+  </style>
 </head>
 <body>
-  <h1>Lan May Cafe</h1>
-  <p>Khung giao dien - Hau thay bang ban demo/Figma (H1).</p>
+  <main class="the-dang-nhap">
+    <img class="logo" src="/assets/logo.svg" alt="">
+    <h1>Đăng nhập Làn Mây POS</h1>
+
+    <p class="hop-loi an" id="hop-loi" role="alert"></p>
+
+    <form id="form-dang-nhap" novalidate>
+      <div class="truong">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" name="username" autocomplete="username" aria-describedby="loi-username" autofocus>
+        <p class="loi-o" id="loi-username"></p>
+      </div>
+
+      <div class="truong">
+        <label for="password">Mật khẩu</label>
+        <div class="o-mat-khau">
+          <input type="password" id="password" name="password" autocomplete="current-password" aria-describedby="loi-password">
+          <button type="button" class="nut-hien" id="nut-hien" aria-controls="password" aria-pressed="false">Hiện</button>
+        </div>
+        <p class="loi-o" id="loi-password"></p>
+      </div>
+
+      <label class="ghi-nho"><input type="checkbox" id="ghi-nho"> Ghi nhớ đăng nhập</label>
+      <button class="btn btn-chinh btn-rong" type="submit" id="nut-dang-nhap">Đăng nhập</button>
+    </form>
+    <button type="button" class="quen" id="nut-quen">Quên mật khẩu?</button>
+  </main>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/dang-nhap.js"></script>
 </body>
 </html>

@@ -1,0 +1,96 @@
+/* Khung giao dien chung Lan May POS (H1) - mau, font lay tu ban demo/Figma cua nhom */
+* { box-sizing: border-box; }
+:root {
+  --ink: #2B1B12;
+  --muted: #6B5B50;
+  --sun: #F5A25D;
+  --brand: #B04400;
+  --brand-dam: #8F3700;
+  --line: #8A6A55;
+  --line-nhat: #E6E0DA;
+  --nen: #FDF1E5;
+  --focus: #0B57D0;
+  --danger: #B3261E;
+  --ok: #1E7B34;
+  --toi: #3B2314;
+  --bo-goc: 8px;
+}
+
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 1rem; color: var(--ink); background: #fff; }
+button, input, textarea, select { font-family: inherit; font-size: 1rem; }
+img { max-width: 100%; display: block; }
+h1, h2, h3 { line-height: 1.25; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.an { display: none !important; }
+
+.skip { position: absolute; left: .5rem; top: -4rem; background: var(--toi); color: #fff; padding: .75rem 1rem; z-index: 50; border-radius: 6px; text-decoration: none; }
+.skip:focus { top: .5rem; }
+
+/* ---------- Thanh tren cung (menu theo vai tro) ---------- */
+.top { background: var(--sun); color: var(--ink); padding: .75rem 1.25rem; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.top :focus-visible { outline-color: var(--ink); }
+.top .logo { width: 2.5rem; height: 2.5rem; }
+.top .ten-app { font-size: 1.15rem; font-weight: 700; margin: 0; }
+.top nav { display: flex; gap: .25rem; flex-wrap: wrap; flex: 1 1 100%; order: 3; }
+@media (min-width: 60em) { .top nav { flex: 1 1 auto; order: 0; } }
+.top nav a { color: var(--ink); text-decoration: none; padding: .55rem .8rem; border-radius: var(--bo-goc); font-weight: 600; min-height: 2.75rem; display: inline-flex; align-items: center; }
+.top nav a:hover { background: rgba(255, 255, 255, .45); }
+.top nav a[aria-current="page"] { background: var(--ink); color: #fff; }
+.top .nguoi-dung { display: flex; align-items: center; gap: .5rem; font-size: .95rem; margin-left: auto; }
+.top .vai-tro { font-size: .8rem; background: rgba(255, 255, 255, .6); padding: .15rem .5rem; border-radius: 999px; }
+
+/* ---------- Bo cuc trang ---------- */
+.page { max-width: 90rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+.page > h1 { font-size: 1.4rem; margin: .5rem 0 1rem; }
+
+/* ---------- Nut ---------- */
+.btn { min-height: 2.75rem; padding: .6rem 1rem; border-radius: var(--bo-goc); border: 2px solid var(--brand); background: #fff; color: var(--brand); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; text-decoration: none; }
+.btn:hover { background: #FFF6EE; }
+.btn-chinh { background: var(--brand); color: #fff; }
+.btn-chinh:hover { background: var(--brand-dam); }
+.btn-nguy-hiem { border-color: var(--danger); color: var(--danger); }
+.btn-nho { min-height: 2.25rem; padding: .3rem .7rem; font-size: .9rem; }
+.btn-rong { width: 100%; }
+.btn:disabled, .btn[aria-disabled="true"] { background: #CFC3BA; border-color: #CFC3BA; color: var(--muted); cursor: not-allowed; }
+.top .btn { border-color: var(--ink); color: var(--ink); background: transparent; }
+
+/* ---------- O nhap + loi ngay duoi o ---------- */
+.truong { margin-bottom: 1rem; }
+.truong label { display: block; font-size: .9rem; margin-bottom: .3rem; color: var(--muted); font-weight: 600; }
+.truong input, .truong textarea, .truong select { width: 100%; min-height: 2.75rem; padding: .6rem; border: 2px solid var(--line); border-radius: var(--bo-goc); color: var(--ink); background: #fff; }
+.truong input[aria-invalid="true"] { border-color: var(--danger); }
+.loi-o { color: var(--danger); font-size: .875rem; margin: .3rem 0 0; min-height: 1.1em; }
+.goi-y { font-size: .8rem; color: var(--muted); margin: .3rem 0 0; }
+.hop-loi { color: var(--danger); background: #FDECEA; border: 1px solid var(--danger); border-radius: 6px; padding: .6rem .75rem; margin: 0 0 1rem; font-size: .95rem; }
+
+/* ---------- The (card) ---------- */
+.the { border: 1px solid var(--line-nhat); border-radius: 10px; padding: 1rem; background: #fff; }
+
+/* ---------- Trang thai rong ---------- */
+.rong { text-align: center; color: var(--muted); padding: 2.5rem 1rem; border: 2px dashed var(--line-nhat); border-radius: 10px; }
+.rong svg { width: 3rem; height: 3rem; margin: 0 auto .5rem; display: block; }
+
+/* ---------- Loading: thanh chay tren cung khi dang goi API ---------- */
+#thanh-tai { position: fixed; top: 0; left: 0; height: 4px; width: 100%; z-index: 100; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: chay 1s linear infinite; display: none; }
+body.dang-tai #thanh-tai { display: block; }
+body.dang-tai { cursor: progress; }
+@keyframes chay { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+
+/* ---------- Toast ---------- */
+#vung-toast { position: fixed; right: 1rem; bottom: 1rem; display: grid; gap: .5rem; z-index: 90; max-width: min(24rem, calc(100vw - 2rem)); }
+.toast { background: var(--toi); color: #fff; padding: .8rem 1rem; border-radius: var(--bo-goc); box-shadow: 0 4px 14px rgba(0, 0, 0, .2); font-size: .95rem; }
+.toast.thanh-cong { background: var(--ok); }
+.toast.loi { background: var(--danger); }
+
+/* ---------- Popup (dialog): alert + xac nhan ---------- */
+dialog.popup { border: none; border-radius: 12px; padding: 1.25rem; width: min(26rem, calc(100vw - 2rem)); color: var(--ink); }
+dialog.popup::backdrop { background: rgba(43, 27, 18, .45); }
+dialog.popup h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+dialog.popup p { margin: 0 0 1rem; }
+dialog.popup .hang-nut { display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
