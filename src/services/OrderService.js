@@ -96,7 +96,15 @@ class OrderService {
 
     const daLuu = await DonHangRepository.luuOrder(order);
     await BanRepository.capNhatTrangThai(ban.banId, 'DANG_PHUC_VU');
-    return daLuu;
+
+    // Tra ve dung cau truc don day du theo api-contract (UC01)
+    const chiTiet = Array.isArray(daLuu.dsChiTiet) && daLuu.dsChiTiet.length ? daLuu.dsChiTiet : dsMon;
+    return OrderService.dungDonDayDu(
+      { donHangId: daLuu.donHangId || daLuu.id, banId: order.banId, trangThai: order.trangThai },
+      chiTiet,
+      order.tongTien,
+      order.isSynced,
+    );
   }
 
   // ---- Ho tro giao dien: so do ban, thuc don, xem don ----

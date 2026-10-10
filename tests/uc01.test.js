@@ -28,6 +28,20 @@ describe('UC01 tao order', () => {
     expect(BanRepository.capNhatTrangThai).toHaveBeenCalledWith('ban-05', 'DANG_PHUC_VU');
   });
 
+  test('TC-01-12 response dung cau truc don day du theo api-contract', async () => {
+    DonHangRepository.luuOrder.mockResolvedValue({
+      id: 'dh-001', donHangId: 'dh-001', affectedRows: 1,
+      dsChiTiet: [{ id: 'ct-001', chiTietId: 'ct-001', monId: 'mon-01', monAnId: 'mon-01', tenMon: 'Bac xiu',
+        soLuong: 2, donGia: 45000, ghiChu: 'it da', trangThaiCheBien: 'CHO_PHA_CHE' }],
+    });
+    const r = await OrderService.xuLyTaoOrder(dto(2));
+    expect(Object.keys(r).sort()).toEqual(['banId', 'donHangId', 'dsMon', 'isSynced', 'tongTien', 'trangThai']);
+    expect(r).toMatchObject({ donHangId: 'dh-001', banId: 'ban-05', trangThai: 'DANG_PHUC_VU', tongTien: 90000, isSynced: true });
+    expect(r.dsMon).toEqual([
+      { chiTietId: 'ct-001', monId: 'mon-01', tenMon: 'Bac xiu', soLuong: 2, donGia: 45000, ghiChu: 'it da', trangThaiCheBien: 'CHO_PHA_CHE' },
+    ]);
+  });
+
   test.each([1, 99])('TC-01-02/03 so luong bien hop le %i', async (sl) => {
     const r = await OrderService.xuLyTaoOrder(dto(sl));
     expect(r.tongTien).toBe(sl * 45000);
