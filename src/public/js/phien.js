@@ -14,7 +14,8 @@ const Phien = (() => {
     PHUC_VU: [['/tables.html', 'Sơ đồ bàn']],
     BARISTA: [['/kitchen.html', 'Màn bếp']],
     THU_NGAN: [['/pos.html', 'Thu ngân']],
-    CHU_QUAN: [['/dashboard.html', 'Tổng quan'], ['/tables.html', 'Sơ đồ bàn'], ['/kitchen.html', 'Màn bếp'], ['/pos.html', 'Thu ngân']],
+    // API chi cho dung vai tro (api-contract, tests/phanquyen.test.js): chu quan khong vao man cua vai tro khac
+    CHU_QUAN: [['/dashboard.html', 'Tổng quan']],
   };
 
   // ghiNho = true: luu localStorage (giu sau khi tat trinh duyet), false: sessionStorage

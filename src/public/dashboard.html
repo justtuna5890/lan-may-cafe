@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="/css/app.css">
   <style>
     .o-chuc-nang { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; }
-    .o-chuc-nang a { display: block; text-decoration: none; color: var(--ink); height: 100%; }
-    .o-chuc-nang a:hover .the { border-color: var(--brand); }
+    .o-chuc-nang .the { height: 100%; }
     .o-chuc-nang h2 { font-size: 1.1rem; margin: 0 0 .35rem; color: var(--brand); }
     .o-chuc-nang p { margin: 0; color: var(--muted); font-size: .95rem; }
+    .o-chuc-nang .vai-tro-dung { margin-top: .6rem; color: var(--ink); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -20,10 +20,12 @@
 
   <main class="page" id="noi-dung">
     <h1>Tổng quan</h1>
+    <!-- Moi man chi dung duoc voi tai khoan dung vai tro (API chan vai tro khac), nen o day chi gioi thieu, khong dat link -->
+    <p class="rong-nho">Mỗi màn hình dùng tài khoản của đúng vai trò. Đăng xuất rồi đăng nhập bằng tài khoản đó để sử dụng.</p>
     <ul class="o-chuc-nang">
-      <li><a href="/tables.html"><div class="the"><h2>Sơ đồ bàn</h2><p>Xem trạng thái bàn, gọi món, cập nhật order.</p></div></a></li>
-      <li><a href="/kitchen.html"><div class="the"><h2>Màn bếp</h2><p>Danh sách món chờ pha chế, cập nhật trạng thái.</p></div></a></li>
-      <li><a href="/pos.html"><div class="the"><h2>Thu ngân</h2><p>Lập hóa đơn và thanh toán theo bàn.</p></div></a></li>
+      <li><div class="the"><h2>Sơ đồ bàn</h2><p>Xem trạng thái bàn, gọi món, cập nhật order.</p><p class="vai-tro-dung">Tài khoản Phục vụ</p></div></li>
+      <li><div class="the"><h2>Màn bếp</h2><p>Danh sách món chờ pha chế, cập nhật trạng thái.</p><p class="vai-tro-dung">Tài khoản Barista</p></div></li>
+      <li><div class="the"><h2>Thu ngân</h2><p>Lập hóa đơn và thanh toán theo bàn.</p><p class="vai-tro-dung">Tài khoản Thu ngân</p></div></li>
     </ul>
   </main>
 
