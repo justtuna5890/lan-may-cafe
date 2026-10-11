@@ -12,6 +12,16 @@ class PaymentController {
     }
   }
 
+  // Ho tro UC08 - lay don dang phuc vu cua ban
+  static async layDonHienTai(req, res, next) {
+    try {
+      const data = await PaymentService.layDonHienTaiCuaBan(req.params.id);
+      return ok(res, data);
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   // UC10 - thanh toan
   static async thanhToan(req, res, next) {
     try {

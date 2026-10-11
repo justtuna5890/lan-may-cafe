@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Màn bếp - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/kitchen.css">
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <header class="top"></header>
+
+  <main class="page kds" id="noi-dung">
+    <div class="kds-tieu-de">
+      <div>
+        <p class="kds-nhan">Khu vực pha chế</p>
+        <h1>Màn hình bếp</h1>
+      </div>
+      <div class="kds-hanh-dong">
+        <span class="kds-ket-noi dang-ket-noi" id="trang-thai-ket-noi" role="status" aria-live="polite">Đang kết nối</span>
+        <button class="btn" type="button" id="nut-lam-moi">Làm mới</button>
+      </div>
+    </div>
+
+    <section class="kds-thong-ke" aria-label="Tổng quan món pha chế">
+      <article class="the kds-chi-so"><span>Chờ pha chế</span><strong id="dem-cho">0</strong></article>
+      <article class="the kds-chi-so"><span>Đang làm</span><strong id="dem-dang-lam">0</strong></article>
+      <article class="the kds-chi-so"><span>Tổng hiển thị</span><strong id="dem-tat-ca">0</strong></article>
+    </section>
+
+    <section class="kds-dieu-khien" aria-label="Lọc danh sách món">
+      <div class="kds-bo-loc" role="group" aria-label="Lọc theo trạng thái">
+        <button class="btn btn-nho dang-chon" type="button" data-loc="TAT_CA" aria-pressed="true">Tất cả</button>
+        <button class="btn btn-nho" type="button" data-loc="CHO_PHA_CHE" aria-pressed="false">Chờ pha chế</button>
+        <button class="btn btn-nho" type="button" data-loc="DANG_LAM" aria-pressed="false">Đang làm</button>
+      </div>
+      <label class="kds-tim-kiem" for="tu-khoa">
+        <span class="sr-only">Tìm theo món, mã đơn hoặc số bàn</span>
+        <input id="tu-khoa" type="search" placeholder="Tìm món, mã đơn, số bàn">
+      </label>
+    </section>
+
+    <p class="hop-loi an" id="loi-kds" role="alert"></p>
+    <p class="kds-cap-nhat" id="thoi-diem-cap-nhat" aria-live="polite"></p>
+    <section class="kds-danh-sach" id="danh-sach-mon" aria-live="polite" aria-busy="true" aria-label="Danh sách món cần pha chế"></section>
+  </main>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/kitchen.js"></script>
+</body>
+</html>

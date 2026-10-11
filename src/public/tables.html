@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sơ đồ bàn - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    .bo-cuc-goi-mon { display: grid; gap: 1rem; }
+    @media (min-width: 60em) { .bo-cuc-goi-mon { grid-template-columns: 1fr 26rem; align-items: start; } .cot-don { position: sticky; top: 1rem; } }
+    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+
+    /* Thuc don */
+    .luoi-mon { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .75rem; list-style: none; padding: 0; margin: 0; }
+    .o-mon { width: 100%; height: 100%; padding: .6rem; border: 2px solid var(--line-nhat); border-radius: 10px; background: #fff; color: var(--ink); cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: .3rem; }
+    .o-mon:hover { border-color: var(--brand); }
+    .o-mon img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--nen); }
+    .o-mon .ten-mon { font-weight: 700; }
+    .o-mon .gia { color: var(--brand); font-weight: 700; }
+    .o-mon[aria-disabled="true"] { cursor: not-allowed; background: #F1EDEA; color: var(--muted); border-color: var(--line-nhat); }
+    .o-mon[aria-disabled="true"] img { filter: grayscale(1); opacity: .55; }
+    .o-mon[aria-disabled="true"] .gia { color: var(--muted); }
+    .nhan-het { align-self: flex-start; font-size: .75rem; font-weight: 700; background: var(--muted); color: #fff; padding: .1rem .5rem; border-radius: 999px; }
+
+    /* Mon da goi + mon moi */
+    .ds-dong { list-style: none; padding: 0; margin: 0 0 .75rem; }
+    .dong-mon { border-bottom: 1px solid var(--line-nhat); padding: .6rem 0; display: grid; gap: .4rem; }
+    .dong-mon:last-child { border-bottom: none; }
+    .dong-mon .hang { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .dong-mon .ten { font-weight: 700; flex: 1 1 8rem; }
+    .dong-mon .ghi-chu { font-size: .85rem; color: var(--muted); margin: 0; }
+    .dong-mon.da-huy .ten { text-decoration: line-through; color: var(--muted); }
+    .dong-mon.loi { background: #FDECEA; }
+    .buoc-sl { display: inline-flex; align-items: center; gap: .25rem; }
+    .buoc-sl button { min-height: 2.5rem; }
+    .buoc-sl [data-hd="giam"], .buoc-sl [data-hd="tang"] { width: 2.5rem; padding: 0; }
+    #tieu-de-gio { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--line-nhat); }
+    .buoc-sl input { width: 3.5rem; min-height: 2.5rem; text-align: center; border: 2px solid var(--line); border-radius: var(--bo-goc); }
+    .buoc-sl input[aria-invalid="true"] { border-color: var(--danger); }
+    .dong-mon .o-ghi-chu { width: 100%; min-height: 2.5rem; padding: .4rem .6rem; border: 2px solid var(--line); border-radius: var(--bo-goc); }
+    .dong-mon .loi-o { margin: 0; min-height: 0; }
+    .canh-bao { background: #FFF6E0; border: 1px solid #C58A00; border-radius: 6px; padding: .5rem .75rem; font-size: .9rem; margin: 0 0 .75rem; }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <header class="top"></header>
+
+  <main class="page" id="noi-dung">
+    <!-- Man 1: so do ban -->
+    <section id="man-so-do" aria-labelledby="tieu-de-so-do">
+      <div class="dau-trang">
+        <h1 id="tieu-de-so-do">Sơ đồ bàn</h1>
+        <ul class="chu-thich" aria-label="Chú thích trạng thái bàn">
+          <li><span class="cham" data-tt="TRONG"></span>Trống</li>
+          <li><span class="cham" data-tt="DANG_PHUC_VU"></span>Đang phục vụ</li>
+          <li><span class="cham" data-tt="CAN_DON"></span>Cần dọn</li>
+          <li><span class="cham" data-tt="DAT_TRUOC"></span>Đặt trước</li>
+        </ul>
+        <button type="button" class="btn btn-nho day-phai" id="nut-tai-lai">Tải lại</button>
+      </div>
+      <div id="luoi-ban"></div>
+    </section>
+
+    <!-- Man 2: goi mon (UC01) / cap nhat order (UC04) cua 1 ban -->
+    <section id="man-goi-mon" class="an" aria-labelledby="tieu-de-goi-mon">
+      <div class="dau-trang">
+        <button type="button" class="btn btn-nho" id="nut-quay-lai">← Sơ đồ bàn</button>
+        <h1 id="tieu-de-goi-mon" tabindex="-1">Bàn</h1>
+        <span class="tt-ban" id="nhan-ban"></span>
+      </div>
+
+      <div class="bo-cuc-goi-mon">
+        <section class="the" aria-labelledby="tieu-de-thuc-don">
+          <h2 id="tieu-de-thuc-don">Thực đơn</h2>
+          <div class="truong">
+            <label for="o-tim">Tìm món</label>
+            <input type="search" id="o-tim" placeholder="Ví dụ: trà đào" autocomplete="off">
+          </div>
+          <div id="ds-thuc-don"></div>
+        </section>
+
+        <div class="cot-don">
+          <section class="the" aria-labelledby="tieu-de-don">
+            <h2 id="tieu-de-don">Món đã gọi</h2>
+            <div id="khu-don"></div>
+
+            <h2 id="tieu-de-gio">Món mới</h2>
+            <p class="hop-loi an" id="loi-gio" role="alert"></p>
+            <ul class="ds-dong" id="gio-hang" aria-labelledby="tieu-de-gio"></ul>
+            <div class="dong-tien"><span>Tạm tính món mới</span><strong id="tong-gio">0đ</strong></div>
+            <div class="dong-tien lon"><span>Tổng đơn sau khi gửi</span><span id="tong-don">0đ</span></div>
+            <button type="button" class="btn btn-chinh btn-rong" id="nut-gui-bep">Gửi bếp</button>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/phuc-vu.js"></script>
+</body>
+</html>

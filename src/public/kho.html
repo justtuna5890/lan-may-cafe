@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý kho - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/kho.css">
+</head>
+
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <header class="top"></header>
+
+  <main class="page kho" id="noi-dung">
+    <div class="kho-tieu-de">
+      <div>
+        <p class="kho-nhan">UC18 · Nguyên liệu</p>
+        <h1>Quản lý kho nguyên liệu</h1>
+      </div>
+      <button class="btn" type="button" id="nut-lam-moi">Làm mới</button>
+    </div>
+
+    <section class="kho-thong-ke" aria-label="Tổng quan kho">
+      <article class="the kho-chi-so"><span>Tổng nguyên liệu</span><strong id="dem-tat-ca">0</strong></article>
+      <article class="the kho-chi-so"><span>Còn hàng</span><strong id="dem-con-hang">0</strong></article>
+      <article class="the kho-chi-so kho-chi-so-het"><span>Hết hàng</span><strong id="dem-het-hang">0</strong></article>
+    </section>
+
+    <section class="kho-dieu-khien" aria-label="Lọc nguyên liệu">
+      <div class="kho-bo-loc" role="group" aria-label="Lọc theo tồn kho">
+        <button class="btn btn-nho dang-chon" type="button" data-loc="TAT_CA" aria-pressed="true">Tất cả</button>
+        <button class="btn btn-nho" type="button" data-loc="CON_HANG" aria-pressed="false">Còn hàng</button>
+        <button class="btn btn-nho" type="button" data-loc="HET_HANG" aria-pressed="false">Hết hàng</button>
+      </div>
+      <label class="kho-tim-kiem" for="tu-khoa"><span class="sr-only">Tìm nguyên liệu</span><input id="tu-khoa"
+          type="search" placeholder="Tìm tên hoặc mã nguyên liệu"></label>
+    </section>
+
+    <p class="hop-loi an" id="loi-kho" role="alert"></p>
+    <p class="kho-cap-nhat" id="thoi-diem-cap-nhat" aria-live="polite"></p>
+    <section class="kho-danh-sach" id="danh-sach-nguyen-lieu" aria-label="Danh sách nguyên liệu" aria-live="polite"
+      aria-busy="true"></section>
+  </main>
+
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/kho.js"></script>
+</body>
+
+</html>
