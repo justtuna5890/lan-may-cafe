@@ -4,6 +4,7 @@ const OrderController = require('../controllers/OrderController');
 const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
 const KhoHangController = require('../controllers/KhoHangController');
+const MenuController = require('../controllers/MenuController');
 const kdsRealtime = require('../realtime/kds');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
@@ -27,7 +28,7 @@ const phucVu = [verifyToken, requireRole('PHUC_VU')];
 const thuNgan = [verifyToken, requireRole('THU_NGAN')];
 const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN')];
 const barista = [verifyToken, requireRole('BARISTA')];
-
+const chuQuan = [verifyToken, requireRole('CHU_QUAN')];
 // Ho tro giao dien
 router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
 router.get('/menu', ...phucVu, OrderController.layThucDon);
@@ -110,5 +111,18 @@ router.post(
     KhoHangController.xuatKho
 );
 
+// =====================================================
+// UC22 - QUẢN LÝ MENU (chỉ CHỦ QUÁN)
+// chuQuan = verifyToken (đã đăng nhập) + requireRole('CHU_QUAN') (đúng vai trò)
+// =====================================================
+
+// Xem toàn bộ thực đơn
+router.get('/menu-items', ...chuQuan, MenuController.layDanhSach);
+
+// Thêm món mới. Body: { tenMon, gia }
+router.post('/menu-items', ...chuQuan, MenuController.themMon);
+
+// Sửa giá và/hoặc bật/tắt bán 1 món. Body: { gia?, trangThai? }
+router.patch('/menu-items/:id', ...chuQuan, MenuController.capNhatMon);
 
 module.exports = router;
