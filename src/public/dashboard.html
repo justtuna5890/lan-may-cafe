@@ -12,6 +12,8 @@
     .o-chuc-nang h2 { font-size: 1.1rem; margin: 0 0 .35rem; color: var(--brand); }
     .o-chuc-nang p { margin: 0; color: var(--muted); font-size: .95rem; }
     .o-chuc-nang .vai-tro-dung { margin-top: .6rem; color: var(--ink); font-weight: 600; }
+    .o-chuc-nang a { display: block; height: 100%; color: inherit; text-decoration: none; }
+    .o-chuc-nang a:hover .the { border-color: var(--brand); }
   </style>
 </head>
 <body>
@@ -20,9 +22,10 @@
 
   <main class="page" id="noi-dung">
     <h1>Tổng quan</h1>
-    <!-- Moi man chi dung duoc voi tai khoan dung vai tro (API chan vai tro khac), nen o day chi gioi thieu, khong dat link -->
+        <!-- Chu quan chi dung man cua minh (Quan ly menu, UC22). 3 man con lai can tai khoan dung vai tro (API chan vai tro khac) nen chi gioi thieu -->
     <p class="rong-nho">Mỗi màn hình dùng tài khoản của đúng vai trò. Đăng xuất rồi đăng nhập bằng tài khoản đó để sử dụng.</p>
     <ul class="o-chuc-nang">
+      <li><a href="/quan-ly-menu.html"><div class="the"><h2>Quản lý menu</h2><p>Thêm món mới, sửa giá, bật/tắt bán món.</p><p class="vai-tro-dung">Bấm để mở →</p></div></a></li>
       <li><div class="the"><h2>Sơ đồ bàn</h2><p>Xem trạng thái bàn, gọi món, cập nhật order.</p><p class="vai-tro-dung">Tài khoản Phục vụ</p></div></li>
       <li><div class="the"><h2>Màn bếp</h2><p>Danh sách món chờ pha chế, cập nhật trạng thái.</p><p class="vai-tro-dung">Tài khoản Barista</p></div></li>
       <li><div class="the"><h2>Thu ngân</h2><p>Lập hóa đơn và thanh toán theo bàn.</p><p class="vai-tro-dung">Tài khoản Thu ngân</p></div></li>
