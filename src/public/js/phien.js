@@ -44,8 +44,12 @@ const Phien = (() => {
   }
 
   // NhanVien.dangXuat(): token JWT khong luu o server, nen chi can xoa phia giao dien
-  function dangXuat() {
+  // Cookie giu trang la HttpOnly nen phai nho server xoa; loi mang thi van dang xuat o phia giao dien
+  async function dangXuat() {
     xoa();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) { /* bo qua */ }
     window.location.replace('/');
   }
 

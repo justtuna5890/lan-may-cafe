@@ -20,6 +20,7 @@ router.get('/health', (req, res) =>
 
 // UC21 (khong can token)
 router.post('/auth/login', AuthController.dangNhap);
+router.post('/auth/logout', AuthController.dangXuat);
 
 // Phan quyen theo api-contract: verifyToken (401) -> requireRole (403)
 const phucVu = [verifyToken, requireRole('PHUC_VU')];

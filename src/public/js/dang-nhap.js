@@ -7,13 +7,17 @@
   const nutDangNhap = document.getElementById('nut-dang-nhap');
 
   // Da dang nhap roi thi vao thang trang chu cua vai tro
+  // Server day ve day (?hetPhien) nghia la cookie het han/khong hop le: bo phien luu o trinh duyet,
+  // neu khong se bi chuyen nguoc ve trang chu cua vai tro va lap vo han
+  const hetPhien = new URLSearchParams(window.location.search).has('hetPhien');
+  if (hetPhien) Phien.xoa();
   const phienCu = Phien.lay();
   if (phienCu) {
     window.location.replace(phienCu.trangChu);
     return;
   }
 
-  if (new URLSearchParams(window.location.search).has('hetPhien')) {
+  if (hetPhien) {
     hienLoiChung('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
   }
 
