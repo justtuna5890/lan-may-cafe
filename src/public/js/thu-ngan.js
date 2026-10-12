@@ -55,9 +55,16 @@
       nut.className = 'o-ban';
       nut.dataset.tt = ban.trangThai;
       nut.dataset.banId = ban.banId;
-      nut.innerHTML = '<span class="ten-ban"></span><span class="tt-ban">Đang phục vụ</span>';
+      const daXong = ban.trangThaiDon === 'HOAN_THANH';
+      if (daXong) nut.classList.add('don-hoan-thanh');
+
+      const nhanDon = daXong
+        ? '<span class="nhan-tt-don hoan-thanh">✓ Đã xong món</span>'
+        : '<span class="nhan-tt-don dang-lam">⏳ Đang pha chế</span>';
+
+      nut.innerHTML = `<span class="ten-ban"></span><span class="tt-ban">Đang phục vụ</span>${nhanDon}`;
       nut.querySelector('.ten-ban').textContent = ban.tenBan;
-      nut.setAttribute('aria-label', `Xem hóa đơn bàn ${ban.tenBan}`);
+      nut.setAttribute('aria-label', `Xem hóa đơn bàn ${ban.tenBan}, ${daXong ? 'đã xong món' : 'đang pha chế'}`);
       nut.setAttribute('aria-pressed', String(Boolean(trangThai.ban && trangThai.ban.banId === ban.banId)));
       const li = document.createElement('li');
       li.appendChild(nut);
@@ -123,7 +130,11 @@
   function veHoaDon() {
     const hd = trangThai.hoaDon;
     const khung = document.createElement('div');
+    const daXong = hd.trangThaiDon === 'HOAN_THANH';
     khung.innerHTML = `
+      <div class="dong-tt-bep ${daXong ? 'hoan-thanh' : 'dang-lam'}">
+        ${daXong ? '✓ Bếp đã pha chế xong tất cả món' : '⏳ Bếp đang chuẩn bị / pha chế'}
+      </div>
       <table class="bang-hd">
         <caption></caption>
         <thead><tr><th scope="col">Món</th><th scope="col"><abbr title="Số lượng">SL</abbr></th><th scope="col">Đơn giá</th><th scope="col">Thành tiền</th></tr></thead>
@@ -399,9 +410,35 @@
       <path d="${duong}" fill="#2B1B12"/>${dinhVi(0, 0)}${dinhVi(n - 7, 0)}${dinhVi(0, n - 7)}</svg>`;
   }
 
+  // ================= Realtime SSE =================
+  let eventSource = null;
+  function ketNoiRealtime() {
+    if (!('EventSource' in window)) return;
+    eventSource = new EventSource(`/api/pos/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    eventSource.addEventListener('connected', () => {
+      console.log('[POS] Đã kết nối realtime');
+    });
+    eventSource.addEventListener('order-completed', (e) => {
+      let data = {};
+      try { data = JSON.parse(e.data); } catch (_) {}
+      UI.amThanh('ting');
+      const ten = data.soBan ? `Bàn ${data.soBan}` : 'Đơn hàng';
+      UI.toast(`${ten} đã pha chế xong, sẵn sàng thanh toán!`, 'thanh-cong', 6000);
+      taiDsBan(true);
+      if (trangThai.ban && (data.banId === trangThai.ban.banId || data.soBan === trangThai.ban.tenBan)) {
+        chonBan(trangThai.ban);
+      }
+    });
+    eventSource.addEventListener('table-updated', () => {
+      taiDsBan(true);
+    });
+    window.addEventListener('beforeunload', () => eventSource?.close());
+  }
+
   // ================= Khoi dong =================
   hienChuThich('Chọn một bàn để xem hóa đơn.');
   taiDsBan();
+  ketNoiRealtime();
   // Tu lam moi danh sach ban 10 giay/lan (khong lam khi dang mo popup)
   setInterval(() => {
     if (!document.hidden && !popup.open) taiDsBan(true);

@@ -565,6 +565,31 @@
     }, trangThai.ban ? 5000 : 10000);
   }
 
+  // ================= Realtime SSE =================
+  let eventSource = null;
+  function ketNoiRealtime() {
+    if (!('EventSource' in window)) return;
+    eventSource = new EventSource(`/api/pos/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    eventSource.addEventListener('menu-updated', async () => {
+      try {
+        trangThai.thucDon = await Api.get('/menu');
+        if (trangThai.ban) {
+          veThucDon();
+          veGio();
+        }
+        UI.toast('Thực đơn vừa được cập nhật từ kho!', '');
+      } catch (_) {}
+    });
+    eventSource.addEventListener('table-updated', () => {
+      taiSoDo(true);
+    });
+    eventSource.addEventListener('order-completed', () => {
+      if (trangThai.ban) lamMoiDon({ ep: true });
+    });
+    window.addEventListener('beforeunload', () => eventSource?.close());
+  }
+
   taiSoDo();
   batTuLamMoi();
+  ketNoiRealtime();
 })();

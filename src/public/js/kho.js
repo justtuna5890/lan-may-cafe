@@ -9,6 +9,16 @@
     el['tu-khoa'].addEventListener('input', (event) => { state.tuKhoa = event.target.value.trim().toLocaleLowerCase('vi'); veDanhSach(); });
     el['nut-lam-moi'].addEventListener('click', () => taiDanhSach());
     taiDanhSach();
+    ketNoiRealtime();
+    window.addEventListener('beforeunload', () => state.eventSource?.close());
+  }
+
+  function ketNoiRealtime() {
+    if (!('EventSource' in window)) return;
+    state.eventSource = new EventSource(`/api/kds/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    state.eventSource.addEventListener('inventory-updated', () => {
+      taiDanhSach(true);
+    });
   }
 
   async function taiDanhSach(im = false) {

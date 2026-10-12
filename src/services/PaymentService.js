@@ -5,6 +5,7 @@ const BanRepository = require('../repositories/BanRepository');
 const ThanhToanRepository = require('../repositories/ThanhToanRepository');
 const KetQuaThanhToan = require('../dto/KetQuaThanhToan');
 const HoaDonDTO = require('../dto/HoaDonDTO');
+const { broadcastTableUpdated } = require('../realtime/pos');
 
 const PHUONG_THUC = ['TIEN_MAT', 'QR'];
 
@@ -32,6 +33,7 @@ class PaymentService {
       tongTien,
       tienGiamGia,
       canThanhToan: tongTien - tienGiamGia,
+      trangThaiDon: don.trangThai,
     });
   }
 
@@ -126,6 +128,7 @@ class PaymentService {
         await DonHangRepository.capNhatTrangThai(don.donHangId, 'DA_THANH_TOAN', conn);
         await BanRepository.capNhatTrangThai(don.banId, 'CAN_DON', conn);
       });
+      broadcastTableUpdated({ banId: don.banId, trangThai: 'CAN_DON' });
     } catch (err) {
       // 2 request cung ma giao dich toi cung luc: request cham gap UNIQUE, tra ket qua cua request truoc
       if (err && err.code === 'ER_DUP_ENTRY') {

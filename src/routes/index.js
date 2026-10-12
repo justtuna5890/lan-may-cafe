@@ -5,6 +5,7 @@ const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
 const KhoHangController = require('../controllers/KhoHangController');
 const kdsRealtime = require('../realtime/kds');
+const posRealtime = require('../realtime/pos');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
 const { verifyToken, requireRole, tokenTuQuery } = require('../middlewares/auth');
@@ -26,6 +27,7 @@ const phucVu = [verifyToken, requireRole('PHUC_VU')];
 const thuNgan = [verifyToken, requireRole('THU_NGAN')];
 const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN')];
 const barista = [verifyToken, requireRole('BARISTA')];
+const posUsers = [verifyToken, requireRole('THU_NGAN', 'PHUC_VU', 'CHU_QUAN')];
 
 // Ho tro giao dien
 router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
@@ -46,9 +48,10 @@ router.get('/orders/:id/invoice', ...thuNgan, PaymentController.layHoaDon);
 router.post('/payments', ...thuNgan, PaymentController.thanhToan);
 
 // =====================================================
-// KDS - REALTIME
+// REALTIME
 // =====================================================
 router.get('/kds/stream', tokenTuQuery, ...barista, kdsRealtime.subscribeKDS);
+router.get('/pos/stream', tokenTuQuery, ...posUsers, posRealtime.subscribePOS);
 
 // =====================================================
 // UC15 - LẤY DANH SÁCH MÓN CHO KDS

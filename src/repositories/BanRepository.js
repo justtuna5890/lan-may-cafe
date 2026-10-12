@@ -6,11 +6,19 @@ class BanRepository {
         const [rows] = await conn.query(
             `
       SELECT
-        id AS banId,
-        so_ban AS tenBan,
-        trang_thai AS trangThai
-      FROM ban
-      ORDER BY so_ban ASC
+        b.id AS banId,
+        b.so_ban AS tenBan,
+        b.trang_thai AS trangThai,
+        (
+          SELECT dh.trang_thai
+          FROM don_hang dh
+          WHERE dh.ban_id = b.id
+            AND dh.trang_thai IN ('DANG_PHUC_VU', 'HOAN_THANH')
+          ORDER BY dh.ngay_tao DESC, dh.id DESC
+          LIMIT 1
+        ) AS trangThaiDon
+      FROM ban b
+      ORDER BY b.so_ban ASC
       `
         );
 
