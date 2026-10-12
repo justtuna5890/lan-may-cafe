@@ -122,13 +122,19 @@ class PaymentService {
     try {
       // 3 thao tac ghi trong 1 transaction: loi giua chung thi rollback (TC-10-10)
       await withTransaction(async (conn) => {
+        // Khoa dong don truoc: 2 yeu cau khac ma giao dich cung luc phai xep hang, yeu cau sau
+        // thay don da DA_THANH_TOAN va bi tu choi (UNIQUE ma_giao_dich khong chan duoc truong hop nay)
+        const donKhoa = await DonHangRepository.findById(don.donHangId, conn, { khoa: true });
+        PaymentService.coTheThanhToan(donKhoa);
         await ThanhToanRepository.save(thanhToan, conn);
         await DonHangRepository.capNhatTrangThai(don.donHangId, 'DA_THANH_TOAN', conn);
         await BanRepository.capNhatTrangThai(don.banId, 'CAN_DON', conn);
       });
     } catch (err) {
       // 2 request cung ma giao dich toi cung luc: request cham gap UNIQUE, tra ket qua cua request truoc
-      if (err && err.code === 'ER_DUP_ENTRY') {
+      // Cung ma giao dich: yeu cau sau cho khoa xong thay don da tra -> neu ma do da ghi thi tra ket qua cu
+      const trungDon = err && err.maLoi === 'DON_DA_THANH_TOAN';
+      if (trungDon || (err && err.code === 'ER_DUP_ENTRY')) {
         const truoc = await ThanhToanRepository.findByMaGiaoDich(req.maGiaoDich);
         if (truoc) return PaymentService.ketQuaDaXuLy(truoc);
       }
