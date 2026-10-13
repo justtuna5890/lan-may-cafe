@@ -10,6 +10,7 @@ const TRANG_THEO_VAI_TRO = Object.freeze({
   '/kitchen.html': ['BARISTA'],
   '/kho.html': ['BARISTA'],
   '/dashboard.html': ['CHU_QUAN'],
+  '/quan-ly-menu.html': ['CHU_QUAN'],
 });
 
 const TRANG_CONG_KHAI = new Set(['/', '/index.html']);
