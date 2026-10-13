@@ -1,4 +1,6 @@
 (() => {
+  // Màn bếp dành cho Barista; chủ quán có toàn quyền nên cũng được vào
+  const VAI_TRO_DUOC_VAO = ['BARISTA', 'CHU_QUAN'];
   const TRANG_THAI = {
     CHO_PHA_CHE: { nhan: 'Chờ pha chế', nut: 'Bắt đầu pha', tiepTheo: 'DANG_LAM' },
     DANG_LAM: { nhan: 'Đang pha chế', nut: 'Hoàn thành', tiepTheo: 'DA_XONG' },
@@ -8,7 +10,7 @@
   const el = {};
 
   function khoiTao() {
-    const phien = Phien.yeuCau('BARISTA', 'CHU_QUAN');
+    const phien = Phien.yeuCau(...VAI_TRO_DUOC_VAO);
     if (!phien) return;
     ['danh-sach-mon', 'loi-kds', 'trang-thai-ket-noi', 'thoi-diem-cap-nhat', 'dem-cho', 'dem-dang-lam', 'dem-tat-ca', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));
