@@ -17,7 +17,7 @@ CSDL: dung script cua An (Windows PowerShell), doc cau hinh tu `.env.example`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File docs\setup_db.ps1   # tao CSDL + du lieu mau (khong xoa neu da co)
-powershell -ExecutionPolicy Bypass -File docseset_db.ps1   # xoa va nap lai tu dau (truoc moi dot test)
+powershell -ExecutionPolicy Bypass -File docs\reset_db.ps1   # xoa va nap lai tu dau (truoc moi dot test)
 ```
 
 Hoac chay thu cong: `docs/db/schema.sql` roi `docs/db/seed.sql` (nho dung `--default-character-set=utf8mb4`).

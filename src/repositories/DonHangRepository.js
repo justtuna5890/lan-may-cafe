@@ -60,7 +60,7 @@ class DonHangRepository {
     // Tim don hang theo ID
     // =====================================================
 
-    static async findById(id, conn = pool) {
+    static async findById(id, conn = pool, { khoa = false } = {}) {
         const [rows] = await conn.query(
             `
       SELECT
@@ -77,6 +77,7 @@ class DonHangRepository {
       FROM don_hang
       WHERE id = ?
       LIMIT 1
+      ${khoa ? 'FOR UPDATE' : ''}
       `,
             [id]
         );
@@ -96,7 +97,7 @@ class DonHangRepository {
     }
 
     // =====================================================
-    // Tim don dang phuc vu cua mot ban
+    // Tim don chua thanh toan cua mot ban (DANG_PHUC_VU hoac HOAN_THANH)
     // =====================================================
 
     static async findDangPhucVuByBan(banId, conn = pool) {
@@ -115,7 +116,7 @@ class DonHangRepository {
         ngay_tao AS ngayTao
       FROM don_hang
       WHERE ban_id = ?
-        AND trang_thai = 'DANG_PHUC_VU'
+        AND trang_thai IN ('DANG_PHUC_VU', 'HOAN_THANH')
       ORDER BY ngay_tao DESC, id DESC
       LIMIT 1
       `,

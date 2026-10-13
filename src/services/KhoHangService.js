@@ -2,6 +2,8 @@
 const { withTransaction } = require('../config/db');
 const KhoHangRepository = require('../repositories/KhoHangRepository');
 const AppError = require('../utils/AppError');
+const { broadcastMenuUpdated } = require('../realtime/pos');
+const { broadcastInventoryUpdated } = require('../realtime/kds');
 
 class KhoHangService {
     // Lấy danh sách nguyên liệu
@@ -63,6 +65,10 @@ class KhoHangService {
                 tonKho: 0
             };
         });
+
+        broadcastMenuUpdated({ khoHangId: id, loai: 'out-of-stock' });
+        broadcastInventoryUpdated({ khoHangId: id, loai: 'out-of-stock' });
+        return ketQua;
     }
 
     // Nhập thêm nguyên liệu
@@ -126,6 +132,10 @@ class KhoHangService {
 
             return await KhoHangRepository.findById(id, conn);
         });
+
+        broadcastMenuUpdated({ khoHangId: id, loai: 'restock', soLuong: soLuongNhap });
+        broadcastInventoryUpdated({ khoHangId: id, loai: 'restock', soLuong: soLuongNhap });
+        return ketQua;
     }
 
     // Xuất nguyên liệu
@@ -183,6 +193,10 @@ class KhoHangService {
 
             return await KhoHangRepository.findById(id, conn);
         });
+
+        broadcastMenuUpdated({ khoHangId: id, loai: 'issue', soLuong: soLuongXuat });
+        broadcastInventoryUpdated({ khoHangId: id, loai: 'issue', soLuong: soLuongXuat });
+        return ketQua;
     }
 }
 

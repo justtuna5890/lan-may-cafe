@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản lý menu - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <!-- Dùng chung màu, nút, ô nhập của cả app (khung giao diện H1) -->
+  <link rel="stylesheet" href="/css/app.css">
+  <style>
+    /* Bố cục: máy tính 2 cột (trái = form thêm món, phải = bảng thực đơn); điện thoại xếp dọc */
+    .bo-cuc-menu { display: grid; gap: 1rem; }
+    @media (min-width: 60em) { .bo-cuc-menu { grid-template-columns: 22rem 1fr; align-items: start; } }
+    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+    .the > .goi-y { margin: -.4rem 0 1rem; }
+
+    /* Bảng thực đơn: trên điện thoại cho cuộn ngang thay vì tràn trang */
+    .khung-bang { overflow-x: auto; }
+    .bang-menu { width: 100%; border-collapse: collapse; font-size: .95rem; }
+    .bang-menu th, .bang-menu td { padding: .5rem .4rem; border-bottom: 1px solid var(--line-nhat); text-align: left; vertical-align: middle; }
+    .bang-menu thead th { color: var(--muted); font-size: .85rem; }
+    .bang-menu tr.tam-het .ten { color: var(--muted); }
+
+    /* Ô sửa giá + nút Lưu nằm cùng 1 hàng */
+    .o-gia { display: flex; gap: .35rem; align-items: center; }
+    .o-gia input { width: 7.5rem; min-height: 2.25rem; padding: .3rem .5rem; border: 2px solid var(--line); border-radius: var(--bo-goc); }
+    .o-gia input[aria-invalid="true"] { border-color: var(--danger); }
+
+    /* Nhãn trạng thái bán: luôn có chữ, không chỉ dựa vào màu */
+    .nhan-ban { display: inline-block; font-size: .8rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; white-space: nowrap; }
+    .nhan-ban[data-tt="CON_HANG"] { background: #E6F4EA; color: var(--ok); }
+    .nhan-ban[data-tt="TAM_HET"] { background: #EEE9E4; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <!-- Thanh menu trên cùng: phien.js tự vẽ theo vai trò đang đăng nhập -->
+  <header class="top"></header>
+
+  <main class="page" id="noi-dung">
+    <div class="dau-trang">
+      <h1>Quản lý menu</h1>
+      <button type="button" class="btn btn-nho day-phai" id="nut-tai-lai">Tải lại</button>
+    </div>
+
+    <div class="bo-cuc-menu">
+      <!-- Cột trái: form thêm món mới -> gọi POST /api/menu-items -->
+      <section class="the" aria-labelledby="tieu-de-them">
+        <h2 id="tieu-de-them">Thêm món mới</h2>
+        <p class="goi-y">Đồ uống hoặc bánh. Món mới mặc định ở trạng thái "Đang bán".</p>
+        <form id="form-them" novalidate>
+          <div class="truong">
+            <label for="ten-mon">Tên món</label>
+            <input type="text" id="ten-mon" maxlength="100" autocomplete="off" placeholder="Ví dụ: Cà phê muối" aria-describedby="loi-ten-mon">
+            <!-- Chỗ hiện lỗi ngay dưới ô (ví dụ: tên trống, trùng tên) -->
+            <p class="loi-o" id="loi-ten-mon"></p>
+          </div>
+          <div class="truong">
+            <label for="gia-mon">Giá (đ)</label>
+            <input type="number" id="gia-mon" min="1" max="10000000" step="1000" inputmode="numeric" placeholder="Ví dụ: 35000" aria-describedby="loi-gia-mon">
+            <p class="loi-o" id="loi-gia-mon"></p>
+          </div>
+          <button type="submit" class="btn btn-chinh btn-rong" id="nut-them">Thêm món</button>
+        </form>
+      </section>
+
+      <!-- Cột phải: bảng thực đơn -> GET /api/menu-items; sửa giá, bật/tắt bán -> PATCH /api/menu-items/:id -->
+      <section class="the" aria-labelledby="tieu-de-thuc-don">
+        <h2 id="tieu-de-thuc-don">Thực đơn</h2>
+        <div class="truong">
+          <label for="o-tim">Tìm món</label>
+          <input type="search" id="o-tim" placeholder="Ví dụ: tra dao" autocomplete="off">
+        </div>
+        <!-- quan-ly-menu.js (Bước 7) vẽ bảng vào đây -->
+        <div class="khung-bang" id="khu-bang"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Thứ tự nạp: ui.js (thông báo) -> phien.js (đăng nhập) -> api.js (gọi server) -> code riêng của trang -->
+  <script src="/js/ui.js"></script>
+  <script src="/js/phien.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/quan-ly-menu.js"></script>
+</body>
+</html>

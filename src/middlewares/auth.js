@@ -28,4 +28,13 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { verifyToken, requireRole };
+// EventSource (SSE) cua trinh duyet khong gui duoc header Authorization, nen rieng /kds/stream
+// cho phep ?token=<jwt>. Dat truoc verifyToken. Header Authorization neu co van duoc uu tien.
+function tokenTuQuery(req, res, next) {
+  if (!req.headers.authorization && typeof req.query.token === 'string' && req.query.token) {
+    req.headers.authorization = `Bearer ${req.query.token}`;
+  }
+  return next();
+}
+
+module.exports = { verifyToken, requireRole, tokenTuQuery };

@@ -32,7 +32,7 @@ CREATE TABLE nhan_vien (
     PRIMARY KEY (id),
     UNIQUE KEY uk_nhan_vien_username (username),
     CONSTRAINT chk_nhan_vien_so_lan_sai CHECK (so_lan_sai >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 2. BAN
@@ -45,7 +45,7 @@ CREATE TABLE ban (
     PRIMARY KEY (id),
     UNIQUE KEY uk_ban_so_ban (so_ban),
     KEY idx_ban_trang_thai (trang_thai)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 3. KHACH_HANG
@@ -58,7 +58,7 @@ CREATE TABLE khach_hang (
     PRIMARY KEY (id),
     UNIQUE KEY uk_khach_hang_so_dien_thoai (so_dien_thoai),
     UNIQUE KEY uk_khach_hang_email (email)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 4. DON_HANG
@@ -88,7 +88,7 @@ CREATE TABLE don_hang (
     CONSTRAINT fk_don_hang_nhan_vien FOREIGN KEY (nhan_vien_id) REFERENCES nhan_vien (id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_don_hang_tong_tien CHECK (tong_tien >= 0),
     CONSTRAINT chk_don_hang_giam_gia CHECK (tien_giam_gia >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 5. MON_AN
@@ -101,7 +101,7 @@ CREATE TABLE mon_an (
     PRIMARY KEY (id),
     KEY idx_mon_an_trang_thai (trang_thai),
     CONSTRAINT chk_mon_an_gia CHECK (gia >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 6. CHI_TIET_DON
@@ -125,7 +125,7 @@ CREATE TABLE chi_tiet_don (
     CONSTRAINT fk_ctd_mon_an FOREIGN KEY (mon_an_id) REFERENCES mon_an (id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_ctd_so_luong CHECK (so_luong > 0),
     CONSTRAINT chk_ctd_don_gia CHECK (don_gia >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 7. THANH_TOAN
@@ -150,7 +150,7 @@ CREATE TABLE thanh_toan (
     CONSTRAINT fk_thanh_toan_nhan_vien FOREIGN KEY (nhan_vien_id) REFERENCES nhan_vien (id) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_thanh_toan_so_tien CHECK (so_tien >= 0),
     CONSTRAINT chk_thanh_toan_tien_thoi CHECK (tien_thoi >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 8. KHO_HANG
@@ -162,7 +162,7 @@ CREATE TABLE kho_hang (
     ton_kho DOUBLE NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     CONSTRAINT chk_kho_hang_ton_kho CHECK (ton_kho >= 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 9. CONG_THUC_MON
@@ -179,7 +179,7 @@ CREATE TABLE cong_thuc_mon (
     CONSTRAINT fk_ctm_mon_an FOREIGN KEY (mon_an_id) REFERENCES mon_an (id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_ctm_kho_hang FOREIGN KEY (kho_hang_id) REFERENCES kho_hang (id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_ctm_so_luong CHECK (so_luong > 0)
-) ENGINE = InnoDB;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ============================================================
 -- HOÀN TẤT

@@ -12,9 +12,10 @@ const Phien = (() => {
   // Menu theo vai tro: moi vai tro chi thay chuc nang cua minh
   const MENU = {
     PHUC_VU: [['/tables.html', 'Sơ đồ bàn']],
-    BARISTA: [['/kitchen.html', 'Màn bếp']],
+    BARISTA: [['/kitchen.html', 'Màn bếp'], ['/kho.html', 'Quản lý kho']],
     THU_NGAN: [['/pos.html', 'Thu ngân']],
-    CHU_QUAN: [['/dashboard.html', 'Tổng quan'], ['/tables.html', 'Sơ đồ bàn'], ['/kitchen.html', 'Màn bếp'], ['/pos.html', 'Thu ngân']],
+    // API chi cho dung vai tro (api-contract, tests/phanquyen.test.js): chu quan khong vao man cua vai tro khac
+    CHU_QUAN: [['/dashboard.html', 'Tổng quan'], ['/tables.html', 'Sơ đồ bàn'], ['/pos.html', 'Thu ngân'], ['/kitchen.html', 'Màn bếp'], ['/kho.html', 'Kho'], ['/quan-ly-menu.html', 'Quản lý menu'], ['/bao-cao.html', 'Báo cáo doanh thu']], // Chủ quán có toàn quyền
   };
 
   // ghiNho = true: luu localStorage (giu sau khi tat trinh duyet), false: sessionStorage
@@ -43,8 +44,12 @@ const Phien = (() => {
   }
 
   // NhanVien.dangXuat(): token JWT khong luu o server, nen chi can xoa phia giao dien
-  function dangXuat() {
+  // Cookie giu trang la HttpOnly nen phai nho server xoa; loi mang thi van dang xuat o phia giao dien
+  async function dangXuat() {
     xoa();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) { /* bo qua */ }
     window.location.replace('/');
   }
 

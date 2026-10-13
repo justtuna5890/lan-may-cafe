@@ -55,8 +55,11 @@ Giá trị enum (khớp Class Diagram):
 | UC15 | `GET /kitchen/items` | BARISTA | An | An |
 | UC16 | `PATCH /kitchen/items/:chiTietId/status` | BARISTA | An | An |
 | UC16 | `POST /kitchen/items/:chiTietId/undo` | BARISTA | An | An |
-| UC18 | `POST /kitchen/ingredients/:id/out-of-stock` | BARISTA | An | An |
-| UC18 | `POST /kitchen/ingredients/:id/restock` | BARISTA | An | An |
+| (hỗ trợ) | `GET /kds/stream` (SSE, token qua `?token=`) | BARISTA | An | An |
+| (hỗ trợ) | `GET /inventory`, `GET /inventory/:id` | BARISTA | An | An |
+| UC18 | `PATCH /inventory/:id/out-of-stock` | BARISTA | An | An |
+| UC18 | `POST /inventory/:id/restock` | BARISTA | An | An |
+| UC18 | `POST /inventory/:id/issue` | BARISTA | An | An |
 | UC08 | `GET /orders/:id/invoice` | THU_NGAN | Tuấn | Hậu |
 | UC10 | `POST /payments` | THU_NGAN | Tuấn | Hậu |
 
@@ -168,16 +171,23 @@ Response `data`:
 | `MON_DA_HUY` | 409 | Món `DA_HUY` |
 | `KHONG_THE_HOAN_TAC` | 409 | Món đang ở `CHO_PHA_CHE` |
 
-### UC18 – Đánh dấu hết nguyên liệu
+### UC18 – Quản lý kho (đường dẫn `/inventory`, khớp code)
 
-`POST /kitchen/ingredients/:id/out-of-stock` – đặt tồn kho về 0; mọi món dùng nguyên liệu này chuyển `TAM_HET`. Response `data`: `{ "nguyenLieuId", "tonKho": 0, "dsMonBiKhoa": [ "mon-01" ] }`.
+`GET /inventory` → `data`: danh sách nguyên liệu. `GET /inventory/:id` → `data`: một nguyên liệu.
 
-`POST /kitchen/ingredients/:id/restock`. Request: `{ "soLuong": 20 }`. Món dùng nguyên liệu này mở lại (`CON_HANG`) nếu đủ nguyên liệu. Response `data`: `{ "nguyenLieuId", "tonKho": 20, "dsMonMoKhoa": [ "mon-01" ] }`.
+`PATCH /inventory/:id/out-of-stock` – đặt tồn kho về 0 và đồng bộ trạng thái món dùng nguyên liệu này (`TAM_HET`). Response `data`: `{ "id", "tenNguyenLieu", "tonKho": 0 }`.
+
+`POST /inventory/:id/restock`. Request: `{ "soLuong": 20 }`. Nhập thêm, món đủ nguyên liệu mở bán lại (`CON_HANG`). Response `data`: nguyên liệu sau khi nhập.
+
+`POST /inventory/:id/issue`. Request: `{ "soLuong": 5 }`. Xuất kho.
+
+Mọi route bếp và kho (`/kitchen/*`, `/inventory/*`, `/kds/stream`) chỉ cho vai trò `BARISTA`. `/kds/stream` dùng SSE nên không gửi được header: truyền token qua `?token=<jwt>`.
 
 | maLoi | HTTP | Khi nào |
 |---|---|---|
-| `NGUYEN_LIEU_KHONG_TON_TAI` | 404 | Sai id |
-| `SO_LUONG_AM` | 400 | `soLuong` nhỏ hơn hoặc bằng 0 khi nhập |
+| `KHO_THIEU_ID` | 400 | Thiếu mã nguyên liệu |
+| `KHO_KHONG_TIM_THAY` | 404 | Sai id |
+| `KHO_SO_LUONG_KHONG_HOP_LE` | 400 | `soLuong` thiếu hoặc nhỏ hơn hoặc bằng 0 |
 
 ### UC08 – Lập hóa đơn
 

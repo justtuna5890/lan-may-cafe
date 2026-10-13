@@ -71,6 +71,7 @@ h1, h2, h3 { line-height: 1.25; }
 /* ---------- Trang thai rong ---------- */
 .rong { text-align: center; color: var(--muted); padding: 2.5rem 1rem; border: 2px dashed var(--line-nhat); border-radius: 10px; }
 .rong svg { width: 3rem; height: 3rem; margin: 0 auto .5rem; display: block; }
+.rong-nho { color: var(--muted); font-size: .95rem; margin: 0 0 .75rem; }
 
 /* ---------- Loading: thanh chay tren cung khi dang goi API ---------- */
 #thanh-tai { position: fixed; top: 0; left: 0; height: 4px; width: 100%; z-index: 100; background: linear-gradient(90deg, transparent, var(--brand), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: chay 1s linear infinite; display: none; }
@@ -90,6 +91,38 @@ dialog.popup::backdrop { background: rgba(43, 27, 18, .45); }
 dialog.popup h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
 dialog.popup p { margin: 0 0 1rem; }
 dialog.popup .hang-nut { display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ---------- Dau trang: tieu de + nut / chu thich tren cung 1 hang ---------- */
+.dau-trang { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; margin: .5rem 0 1rem; }
+.dau-trang h1 { font-size: 1.4rem; margin: 0; }
+.dau-trang .day-phai { margin-left: auto; }
+
+/* ---------- So do ban (H3, H4): 4 trang thai ban, luon kem chu (khong chi dua vao mau) ---------- */
+.chu-thich { display: flex; flex-wrap: wrap; gap: .4rem 1rem; list-style: none; padding: 0; margin: 0; font-size: .9rem; color: var(--muted); }
+.chu-thich li { display: inline-flex; align-items: center; gap: .4rem; }
+.cham { width: .9rem; height: .9rem; border-radius: 50%; border: 2px solid var(--vien-tt, var(--line)); background: var(--nen-tt, #fff); }
+.luoi-ban { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .75rem; list-style: none; padding: 0; margin: 0; }
+.o-ban { width: 100%; min-height: 6rem; padding: .75rem; border: 2px solid var(--vien-tt, var(--line-nhat)); border-radius: 10px; background: var(--nen-tt, #fff); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; }
+.o-ban:hover { box-shadow: 0 4px 12px rgba(43, 27, 18, .12); }
+.o-ban[aria-disabled="true"] { cursor: not-allowed; box-shadow: none; }
+.o-ban[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+.o-ban .ten-ban { font-size: 1.35rem; font-weight: 700; }
+.tt-ban { font-size: .8rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; background: var(--vien-tt, var(--line)); color: #fff; }
+[data-tt="TRONG"] { --vien-tt: #1E7B34; --nen-tt: #fff; }
+[data-tt="DANG_PHUC_VU"] { --vien-tt: #B04400; --nen-tt: #FFF3E6; }
+[data-tt="CAN_DON"] { --vien-tt: #6B5B50; --nen-tt: #F1EDEA; }
+[data-tt="DAT_TRUOC"] { --vien-tt: #2E5AAC; --nen-tt: #EEF3FC; }
+
+/* ---------- Nhan trang thai che bien tung mon ---------- */
+.nhan-cb { display: inline-block; font-size: .8rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; white-space: nowrap; }
+.nhan-cb[data-cb="CHO_PHA_CHE"] { background: #EEE9E4; color: var(--ink); }
+.nhan-cb[data-cb="DANG_LAM"] { background: #FFE7C2; color: #7A3B00; }
+.nhan-cb[data-cb="DA_XONG"] { background: #E6F4EA; color: var(--ok); }
+.nhan-cb[data-cb="DA_HUY"] { background: #FDECEA; color: var(--danger); }
+
+/* ---------- Dong tong tien ---------- */
+.dong-tien { display: flex; justify-content: space-between; gap: 1rem; margin: .35rem 0; }
+.dong-tien.lon { font-size: 1.2rem; font-weight: 700; color: var(--brand); border-top: 1px solid var(--line-nhat); padding-top: .6rem; margin-top: .6rem; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
