@@ -7,14 +7,14 @@
   const TEN_TT_BAN = { TRONG: 'Trống', DANG_PHUC_VU: 'Đang phục vụ', CAN_DON: 'Cần dọn', DAT_TRUOC: 'Đặt trước' };
   const TEN_CHE_BIEN = { CHO_PHA_CHE: 'Chờ pha chế', DANG_LAM: 'Đang làm', DA_XONG: 'Đã xong', DA_HUY: 'Đã hủy' };
 
-  // Anh mon co san trong /assets, mon khac dung logo
+  // Anh that cua mon trong /assets (nguon va tac gia: docs/nguon-anh.md), mon khac dung logo
   const ANH_MON = {
-    'Cà phê đen': 'cf-den',
-    'Cà phê sữa': 'cf-sua-da',
-    'Bạc xỉu': 'bac-xiu',
-    'Trà đào': 'tra-dao',
-    'Trà sữa': 'tra-sua',
-    'Bánh Croissant': 'banh-croissant',
+    'Cà phê đen': 'cf-den.jpg',
+    'Cà phê sữa': 'cf-sua-da.jpg',
+    'Bạc xỉu': 'bac-xiu.jpg',
+    'Trà đào': 'tra-dao.jpg',
+    'Trà sữa': 'tra-sua.jpg',
+    'Bánh Croissant': 'banh-croissant.jpg',
   };
 
   // 4 nhom mon theo Figma. CSDL chua co cot nhom nen gan theo tu khoa trong ten mon (khong dau);
@@ -220,7 +220,7 @@
       const the = document.createElement('div');
       the.className = 'o-mon';
       the.dataset.monId = mon.monId;
-      the.innerHTML = `<img alt="" src="/assets/${ANH_MON[mon.tenMon] || 'logo'}.svg">
+      the.innerHTML = `<img alt="" loading="lazy" src="/assets/${ANH_MON[mon.tenMon] || 'logo.svg'}">
         <span class="ten-mon"></span><span class="gia"></span>${het ? '<span class="nhan-het">Tạm hết</span>' : ''}
         <button type="button" class="btn btn-nho btn-chinh" data-hd="them">+ Thêm</button>`;
       the.querySelector('.ten-mon').textContent = mon.tenMon;
