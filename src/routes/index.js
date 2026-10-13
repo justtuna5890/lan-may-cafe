@@ -7,6 +7,7 @@ const KhoHangController = require('../controllers/KhoHangController');
 const MenuController = require('../controllers/MenuController');
 const BaoCaoController = require('../controllers/BaoCaoController'); // UC24 báo cáo doanh thu
 const kdsRealtime = require('../realtime/kds');
+const posRealtime = require('../realtime/pos');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
 const { verifyToken, requireRole, tokenTuQuery } = require('../middlewares/auth');
@@ -30,6 +31,8 @@ const thuNgan = [verifyToken, requireRole('THU_NGAN')];
 const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN')];
 const barista = [verifyToken, requireRole('BARISTA')];
 const chuQuan = [verifyToken, requireRole('CHU_QUAN')];
+const posUsers = [verifyToken, requireRole('THU_NGAN', 'PHUC_VU', 'CHU_QUAN')];
+
 // Ho tro giao dien
 router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
 router.get('/menu', ...phucVu, OrderController.layThucDon);
@@ -49,9 +52,10 @@ router.get('/orders/:id/invoice', ...thuNgan, PaymentController.layHoaDon);
 router.post('/payments', ...thuNgan, PaymentController.thanhToan);
 
 // =====================================================
-// KDS - REALTIME
+// REALTIME
 // =====================================================
 router.get('/kds/stream', tokenTuQuery, ...barista, kdsRealtime.subscribeKDS);
+router.get('/pos/stream', tokenTuQuery, ...posUsers, posRealtime.subscribePOS);
 
 // =====================================================
 // UC15 - LẤY DANH SÁCH MÓN CHO KDS

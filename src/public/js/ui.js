@@ -96,5 +96,49 @@ const UI = (() => {
     return `${Number(soTien || 0).toLocaleString('vi-VN')}đ`;
   }
 
-  return { toast, alert, xacNhan, trangThaiRong, batLoading, tatLoading, tien };
+  // Phat am thanh thong bao nhe nhang (chime: 2 tong cho bep; ting: 1 tong cho thu ngan)
+  let audioCtx = null;
+  function amThanh(kieu = 'chime') {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      if (!audioCtx) audioCtx = new AudioContextClass();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const now = audioCtx.currentTime;
+
+      if (kieu === 'ting') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.7);
+      } else {
+        [523.25, 783.99].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const startTime = now + idx * 0.12;
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0.25, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.5);
+        });
+      }
+    } catch (e) {
+      // Bo qua neu trinh duyet chan
+    }
+  }
+
+  return { toast, alert, xacNhan, trangThaiRong, batLoading, tatLoading, tien, amThanh };
 })();
