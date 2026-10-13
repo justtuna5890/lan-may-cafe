@@ -11,10 +11,10 @@ const TRANG_THEO_VAI_TRO = Object.freeze({
   '/kho.html': ['BARISTA'],
   '/dashboard.html': ['CHU_QUAN'],
   '/quan-ly-menu.html': ['CHU_QUAN'],
+  '/bao-cao.html': ['CHU_QUAN'],
 });
 
 const TRANG_CONG_KHAI = new Set(['/', '/index.html']);
-
 function docCookie(req, ten) {
   const chuoi = req.headers.cookie || '';
   for (const phan of chuoi.split(';')) {
