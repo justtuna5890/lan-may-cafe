@@ -9,8 +9,9 @@
   <link rel="stylesheet" href="/css/app.css">
   <style>
     /* Bố cục: máy tính 2 cột (trái = form thêm món, phải = bảng thực đơn); điện thoại xếp dọc */
-    .bo-cuc-menu { display: grid; gap: 1rem; }
-    @media (min-width: 60em) { .bo-cuc-menu { grid-template-columns: 22rem 1fr; align-items: start; } }
+    /* minmax(0, 1fr): cho cot co hep duoc, bang ben trong tu cuon ngang thay vi lam rong ca trang tren dien thoai */
+    .bo-cuc-menu { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+    @media (min-width: 60em) { .bo-cuc-menu { grid-template-columns: 22rem minmax(0, 1fr); align-items: start; } }
     .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
     .the > .goi-y { margin: -.4rem 0 1rem; }
 
