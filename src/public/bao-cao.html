@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Báo cáo doanh thu - Làn Mây POS</title>
+  <link rel="icon" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/app.css"> <!-- màu, nút, ô nhập dùng chung cả app -->
+  <style>
+    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; } /* tiêu đề nhỏ trong mỗi khung */
+    .bo-loc { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; } /* hàng chọn ngày + các nút */
+    .bo-loc .truong { margin: 0; } /* bỏ khoảng cách dưới ô ngày cho thẳng hàng với nút */
+    .bo-loc input { width: 11rem; } /* ô chọn ngày vừa đủ rộng */
+    .luoi-so { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; margin: 1rem 0; } /* 3 ô số lớn, tự xuống hàng trên điện thoại */
+    .o-so .nhan { margin: 0; color: var(--muted); font-size: .9rem; } /* chữ nhỏ "Doanh thu", "Số đơn"... */
+    .o-so .so { margin: .25rem 0 0; font-size: 1.6rem; font-weight: 700; color: var(--brand); } /* con số lớn */
+    .hai-cot { display: grid; gap: 1rem; } /* 2 khung phương thức + top món */
+    @media (min-width: 60em) { .hai-cot { grid-template-columns: 1fr 1fr; } } /* máy tính: đứng cạnh nhau */
+    .bang-bc { width: 100%; border-collapse: collapse; font-size: .95rem; } /* bảng số liệu */
+    .bang-bc th, .bang-bc td { padding: .45rem .3rem; border-bottom: 1px solid var(--line-nhat); text-align: left; } /* kẻ dòng */
+    .bang-bc .so-phai { text-align: right; white-space: nowrap; } /* cột tiền canh phải */
+    .bang-bc thead th { color: var(--muted); font-size: .85rem; } /* tiêu đề cột mờ hơn */
+    .thanh { height: .6rem; background: var(--sun); border-radius: 999px; min-width: 2px; } /* thanh ngang thể hiện doanh thu ngày */
+    .o-thanh { width: 40%; } /* cột chứa thanh ngang */
+  </style>
+</head>
+<body>
+  <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <header class="top"></header> <!-- phien.js tự vẽ thanh menu theo vai trò -->
+
+  <main class="page" id="noi-dung">
+    <div class="dau-trang"><h1>Báo cáo doanh thu</h1></div>
+
+    <section class="the" aria-label="Chọn khoảng ngày"> <!-- khung chọn ngày -->
+      <form id="form-loc" class="bo-loc" novalidate>
+        <div class="truong">
+          <label for="tu-ngay">Từ ngày</label>
+          <input type="date" id="tu-ngay"> <!-- trình duyệt hiện lịch để chọn -->
+        </div>
+        <div class="truong">
+          <label for="den-ngay">Đến ngày</label>
+          <input type="date" id="den-ngay">
+        </div>
+        <button type="submit" class="btn btn-chinh">Xem báo cáo</button>
+        <button type="button" class="btn" data-nhanh="hom-nay">Hôm nay</button> <!-- nút chọn nhanh -->
+        <button type="button" class="btn" data-nhanh="7-ngay">7 ngày qua</button>
+        <button type="button" class="btn" data-nhanh="thang-nay">Tháng này</button>
+      </form>
+      <p class="hop-loi an" id="loi-loc" role="alert"></p> <!-- báo lỗi ngày sai, ẩn khi không có lỗi -->
+    </section>
+
+    <div class="luoi-so" aria-live="polite"> <!-- 3 con số lớn; aria-live để máy đọc màn hình đọc lại khi đổi -->
+      <div class="the o-so"><p class="nhan">Doanh thu</p><p class="so" id="so-doanh-thu">0đ</p></div>
+      <div class="the o-so"><p class="nhan">Số đơn đã thanh toán</p><p class="so" id="so-don">0</p></div>
+      <div class="the o-so"><p class="nhan">Trung bình mỗi đơn</p><p class="so" id="so-trung-binh">0đ</p></div>
+    </div>
+
+    <div class="hai-cot">
+      <section class="the" aria-labelledby="tieu-de-pt"> <!-- tiền mặt / QR -->
+        <h2 id="tieu-de-pt">Theo phương thức thanh toán</h2>
+        <div id="khu-pt"></div>
+      </section>
+      <section class="the" aria-labelledby="tieu-de-top"> <!-- 5 món bán chạy -->
+        <h2 id="tieu-de-top">Top 5 món bán chạy</h2>
+        <div id="khu-top"></div>
+      </section>
+    </div>
+
+    <section class="the" aria-labelledby="tieu-de-ngay" style="margin-top: 1rem"> <!-- từng ngày -->
+      <h2 id="tieu-de-ngay">Doanh thu theo ngày</h2>
+      <div id="khu-ngay"></div>
+    </section>
+  </main>
+
+  <script src="/js/ui.js"></script>     <!-- toast, trạng thái rỗng, định dạng tiền -->
+  <script src="/js/phien.js"></script>  <!-- đăng nhập, thanh menu -->
+  <script src="/js/api.js"></script>    <!-- gọi server -->
+  <script src="/js/bao-cao.js"></script> <!-- code riêng của trang (Bước 7) -->
+</body>
+</html>

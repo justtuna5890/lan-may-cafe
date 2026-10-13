@@ -5,6 +5,7 @@ const PaymentController = require('../controllers/PaymentController');
 const KitchenController = require('../controllers/KitchenController');
 const KhoHangController = require('../controllers/KhoHangController');
 const MenuController = require('../controllers/MenuController');
+const BaoCaoController = require('../controllers/BaoCaoController'); // UC24 báo cáo doanh thu
 const kdsRealtime = require('../realtime/kds');
 const AuthController = require('../controllers/AuthController');
 const { ok } = require('../utils/response');
@@ -124,5 +125,9 @@ router.post('/menu-items', ...chuQuan, MenuController.themMon);
 
 // Sửa giá và/hoặc bật/tắt bán 1 món. Body: { gia?, trangThai? }
 router.patch('/menu-items/:id', ...chuQuan, MenuController.capNhatMon);
+// =====================================================
+// UC24 - BÁO CÁO DOANH THU (chỉ CHỦ QUÁN)
+// =====================================================
+router.get('/reports/revenue', ...chuQuan, BaoCaoController.layBaoCao); // ?tuNgay=YYYY-MM-DD&denNgay=YYYY-MM-DD, không gửi = hôm nay
 
 module.exports = router;
