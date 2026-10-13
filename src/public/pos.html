@@ -18,17 +18,35 @@
     .bang-hd th:first-child, .bang-hd td:first-child { text-align: left; }
     .bang-hd thead th { color: var(--muted); font-size: .85rem; }
 
-    /* Popup thanh toan */
-    dialog.popup-thanh-toan { width: min(30rem, calc(100vw - 2rem)); }
-    .can-tra { font-size: 1.6rem; font-weight: 700; color: var(--brand); display: block; }
-    .chon-pt { border: none; padding: 0; margin: 0 0 1rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+    /* Trang thanh toan (Figma: thanh-toan): trai = hoa don chi tiet, phai = phuong thuc thanh toan */
+    .hai-cot-tt { display: grid; gap: 1rem; max-width: 62rem; }
+    @media (min-width: 60em) { .hai-cot-tt { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .dong-hd { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px solid var(--line-nhat); }
+    .dong-hd .sl { color: var(--muted); }
+    .chon-pt { border: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .5rem; }
     .chon-pt legend { font-size: .9rem; color: var(--muted); font-weight: 600; margin-bottom: .3rem; padding: 0; }
-    .chon-pt label { flex: 1 1 8rem; display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem .75rem; border: 2px solid var(--line-nhat); border-radius: var(--bo-goc); cursor: pointer; font-weight: 700; }
+    .chon-pt label { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem .75rem; border: 2px solid var(--line-nhat); border-radius: var(--bo-goc); cursor: pointer; font-weight: 700; }
     .chon-pt label:has(input:checked) { border-color: var(--brand); background: #FFF6EE; }
     .goi-y-tien { display: flex; gap: .4rem; flex-wrap: wrap; margin: -.5rem 0 1rem; }
     .qr-gia { width: 11rem; height: 11rem; margin: 0 auto .75rem; padding: .5rem; background: #fff; border: 2px solid var(--line-nhat); border-radius: 8px; }
     .qr-gia svg { width: 100%; height: 100%; display: block; }
     #khu-qr p { text-align: center; }
+
+    /* Trang hoan tat (Figma: hoan-tat): dau tich + phieu hoa don + 2 nut */
+    .hoan-tat { max-width: 28rem; margin: 0 auto; text-align: center; }
+    .dau-tich { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 3px solid var(--ok); color: var(--ok); font-size: 1.8rem; font-weight: 700; }
+    .hoan-tat h1 { font-size: 1.4rem; margin: .6rem 0 1rem; }
+    .phieu { text-align: left; }
+    .phieu h2 { text-align: center; letter-spacing: .05em; }
+    .phieu .dong-hd { border-bottom: none; padding: .2rem 0; }
+    .phieu .ngan-cach { border: none; border-top: 1px dashed var(--line); margin: .6rem 0; }
+    .phieu .dong-hd.tong { font-weight: 700; font-size: 1.15rem; }
+    .hang-nut-ht { display: flex; gap: .6rem; margin-top: 1rem; }
+    .hang-nut-ht .btn { flex: 1; }
+    @media print {
+      .top, .skip, .khong-in, #man-ds, #man-tt { display: none !important; }
+      .the { border: none; }
+    }
 
     /* Nhan trang thai che bien cua bep */
     .nhan-tt-don { font-size: .75rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; }
@@ -45,62 +63,89 @@
   <header class="top"></header>
 
   <main class="page" id="noi-dung">
-    <div class="dau-trang">
-      <h1>Thu ngân</h1>
-      <button type="button" class="btn btn-nho day-phai" id="nut-tai-lai">Tải lại</button>
+    <!-- Man 1: danh sach ban + hoa don (UC08) -->
+    <div id="man-ds">
+      <div class="dau-trang">
+        <h1>Thu ngân</h1>
+        <button type="button" class="btn btn-nho day-phai" id="nut-tai-lai">Tải lại</button>
+      </div>
+
+      <div class="bo-cuc-pos">
+        <section class="the" aria-labelledby="tieu-de-ban">
+          <h2 id="tieu-de-ban">Bàn đang phục vụ</h2>
+          <div id="ds-ban"></div>
+        </section>
+
+        <div class="cot-hoa-don">
+          <section class="the" aria-labelledby="tieu-de-hoa-don" aria-live="polite">
+            <h2 id="tieu-de-hoa-don">Hóa đơn</h2>
+            <div id="khu-hoa-don"></div>
+          </section>
+        </div>
+      </div>
     </div>
 
-    <div class="bo-cuc-pos">
-      <section class="the" aria-labelledby="tieu-de-ban">
-        <h2 id="tieu-de-ban">Bàn đang phục vụ</h2>
-        <div id="ds-ban"></div>
-      </section>
+    <!-- Man 2: thanh toan (UC10), bo cuc theo Figma "thanh-toan" -->
+    <section id="man-tt" class="an" aria-labelledby="tt-tieu-de">
+      <div class="dau-trang">
+        <button type="button" class="btn btn-nho" id="tt-quay-lai">← Quay lại</button>
+        <div>
+          <h1 id="tt-tieu-de" tabindex="-1">Thanh toán</h1>
+          <p class="goi-y" id="tt-phu-de"></p>
+        </div>
+      </div>
 
-      <div class="cot-hoa-don">
-        <!-- UC08: hoa don theo ban (HoaDonDTO) -->
-        <section class="the" aria-labelledby="tieu-de-hoa-don" aria-live="polite">
-          <h2 id="tieu-de-hoa-don">Hóa đơn</h2>
-          <div id="khu-hoa-don"></div>
+      <div class="hai-cot-tt">
+        <section class="the" aria-labelledby="tt-tieu-de-hd">
+          <h2 id="tt-tieu-de-hd">Hóa đơn chi tiết</h2>
+          <div id="tt-hoa-don"></div>
+        </section>
+
+        <section class="the" aria-labelledby="tt-tieu-de-pt">
+          <h2 id="tt-tieu-de-pt">Phương thức thanh toán</h2>
+          <form id="form-tt" novalidate>
+            <fieldset class="chon-pt">
+              <legend class="sr-only">Chọn phương thức</legend>
+              <label><input type="radio" name="phuongThuc" value="TIEN_MAT" checked> Tiền mặt</label>
+              <label><input type="radio" name="phuongThuc" value="QR"> Chuyển khoản QR</label>
+            </fieldset>
+
+            <div id="khu-tien-mat">
+              <div class="truong">
+                <label for="tien-khach-dua">Số tiền khách đưa (đ)</label>
+                <input type="number" id="tien-khach-dua" min="0" step="1000" inputmode="numeric" aria-describedby="loi-tien-khach-dua">
+                <p class="loi-o" id="loi-tien-khach-dua"></p>
+              </div>
+              <div class="goi-y-tien" id="goi-y-tien" aria-label="Chọn nhanh số tiền"></div>
+              <div class="dong-tien lon"><span>Tiền thừa</span><span id="tt-tien-thoi">0đ</span></div>
+            </div>
+
+            <div id="khu-qr" class="an">
+              <div class="qr-gia" id="qr-gia" role="img" aria-label="Mã QR thanh toán (giả lập)"></div>
+              <p>Khách quét mã để chuyển <strong id="tt-qr-so-tien"></strong>.<br>QR giả lập: bấm xác nhận khi khách đã chuyển xong.</p>
+            </div>
+
+            <p class="hop-loi an" id="tt-loi" role="alert"></p>
+            <p class="goi-y">Mã giao dịch: <span id="tt-ma-gd"></span></p>
+            <button type="submit" class="btn btn-chinh btn-rong" id="tt-nut-xac-nhan">✓ Xác nhận thanh toán</button>
+          </form>
         </section>
       </div>
-    </div>
-  </main>
+    </section>
 
-  <!-- UC10: popup thanh toan theo SD_ThanhToan -->
-  <dialog class="popup popup-thanh-toan" id="popup-tt" aria-labelledby="tt-tieu-de">
-    <form id="form-tt" novalidate>
-      <h2 id="tt-tieu-de">Thanh toán</h2>
-      <p>Cần thanh toán <span class="can-tra" id="tt-can-tra"></span></p>
-
-      <fieldset class="chon-pt">
-        <legend>Phương thức thanh toán</legend>
-        <label><input type="radio" name="phuongThuc" value="TIEN_MAT" checked> Tiền mặt</label>
-        <label><input type="radio" name="phuongThuc" value="QR"> Chuyển khoản QR</label>
-      </fieldset>
-
-      <div id="khu-tien-mat">
-        <div class="truong">
-          <label for="tien-khach-dua">Tiền khách đưa (đ)</label>
-          <input type="number" id="tien-khach-dua" min="0" step="1000" inputmode="numeric" aria-describedby="loi-tien-khach-dua">
-          <p class="loi-o" id="loi-tien-khach-dua"></p>
+    <!-- Man 3: hoan tat (UC10), bo cuc theo Figma "hoan-tat" -->
+    <section id="man-hoan-tat" class="an" aria-labelledby="ht-tieu-de">
+      <div class="hoan-tat">
+        <span class="dau-tich" aria-hidden="true">✓</span>
+        <h1 id="ht-tieu-de" tabindex="-1">Thanh toán thành công</h1>
+        <div class="the phieu" id="ht-phieu"></div>
+        <div class="hang-nut-ht khong-in">
+          <button type="button" class="btn" id="ht-in">In hóa đơn</button>
+          <button type="button" class="btn btn-chinh" id="ht-tiep">+ Thanh toán bàn khác</button>
         </div>
-        <div class="goi-y-tien" id="goi-y-tien" aria-label="Chọn nhanh số tiền"></div>
-        <div class="dong-tien lon"><span>Tiền thối</span><span id="tt-tien-thoi">0đ</span></div>
       </div>
-
-      <div id="khu-qr" class="an">
-        <div class="qr-gia" id="qr-gia" role="img" aria-label="Mã QR thanh toán (giả lập)"></div>
-        <p>Khách quét mã để chuyển <strong id="tt-qr-so-tien"></strong>.<br>QR giả lập: bấm xác nhận khi khách đã chuyển xong.</p>
-      </div>
-
-      <p class="hop-loi an" id="tt-loi" role="alert"></p>
-      <p class="goi-y">Mã giao dịch: <span id="tt-ma-gd"></span></p>
-      <div class="hang-nut">
-        <button type="button" class="btn" id="tt-nut-huy">Hủy</button>
-        <button type="submit" class="btn btn-chinh" id="tt-nut-xac-nhan">Xác nhận thanh toán</button>
-      </div>
-    </form>
-  </dialog>
+    </section>
+  </main>
 
   <script src="/js/ui.js"></script>
   <script src="/js/phien.js"></script>

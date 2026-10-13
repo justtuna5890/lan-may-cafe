@@ -25,12 +25,21 @@
   const $ = (id) => document.getElementById(id);
   const dsBanEl = $('ds-ban');
   const khuHoaDon = $('khu-hoa-don');
-  const popup = $('popup-tt');
+  // 3 man theo Figma: ds (danh sach ban + hoa don) -> tt (thanh toan) -> ht (hoan tat)
+  const man = { ds: $('man-ds'), tt: $('man-tt'), ht: $('man-hoan-tat') };
   const form = $('form-tt');
   const oTien = $('tien-khach-dua');
   const ttLoi = $('tt-loi');
   const nutXacNhan = $('tt-nut-xac-nhan');
-  const nutHuy = $('tt-nut-huy');
+  const nutQuayLai = $('tt-quay-lai');
+
+  // Chi hien 1 man; dua focus ve tieu de man do cho nguoi dung ban phim
+  function hienMan(ten) {
+    Object.entries(man).forEach(([k, el]) => el.classList.toggle('an', k !== ten));
+    const tieuDe = { tt: 'tt-tieu-de', ht: 'ht-tieu-de' }[ten];
+    if (tieuDe) $(tieuDe).focus();
+  }
+  const dangOManDs = () => !man.ds.classList.contains('an');
 
   const trangThai = {
     dsBan: [], // chi ban DANG_PHUC_VU
@@ -158,7 +167,7 @@
     khung.querySelector('[data-o="tong"]').textContent = UI.tien(hd.tongTien);
     khung.querySelector('[data-o="giam"]').textContent = hd.tienGiamGia ? `−${UI.tien(hd.tienGiamGia)}` : UI.tien(0);
     khung.querySelector('[data-o="can"]').textContent = UI.tien(hd.canThanhToan);
-    khung.querySelector('[data-o="nut"]').addEventListener('click', moPopup);
+    khung.querySelector('[data-o="nut"]').addEventListener('click', moManThanhToan);
     khuHoaDon.replaceChildren(khung);
   }
 
@@ -174,7 +183,11 @@
     return `gd-${ngay}-${gio}-${ngauNhien}`;
   }
 
-  function moPopup() {
+  // Don moi co ma dai (UUID): hien 8 ky tu dau cho gon, don mau (dh-001) giu nguyen
+  const maDonNgan = (id) => (String(id).startsWith('dh-') ? id : `#${String(id).slice(0, 8).toUpperCase()}`);
+
+  // Man "Thanh toan": trai = hoa don chi tiet, phai = phuong thuc thanh toan (Figma: thanh-toan)
+  function moManThanhToan() {
     const hd = trangThai.hoaDon;
     if (!hd) return;
     // 1 ma giao dich cho ca luot: bam lai sau khi mat mang van gui ma cu -> server tra ket qua cu, khong thu 2 lan
@@ -183,25 +196,36 @@
     anLoiTt();
     datLoiTien('');
     $('tt-tieu-de').textContent = `Thanh toán bàn ${hd.soBan}`;
-    $('tt-can-tra').textContent = UI.tien(hd.canThanhToan);
+    $('tt-phu-de').textContent = `Mã đơn: ${maDonNgan(hd.donHangId)}`;
+    veHoaDonChiTiet(hd);
     $('tt-qr-so-tien').textContent = UI.tien(hd.canThanhToan);
     $('tt-ma-gd').textContent = trangThai.maGiaoDich;
     veGoiYTien(hd.canThanhToan);
     veQr(trangThai.maGiaoDich);
     doiPhuongThuc();
-    popup.showModal();
-    oTien.focus();
+    hienMan('tt');
   }
 
-  function dongPopup() {
-    if (trangThai.dangXuLy) return;
-    popup.close();
+  // The "Hoa don chi tiet": moi mon 1 dong, cuoi cung la Tong thanh toan
+  function veHoaDonChiTiet(hd) {
+    const khung = document.createDocumentFragment();
+    const them = (nhan, giaTri, lop = 'dong-hd') => {
+      const d = document.createElement('div');
+      d.className = lop;
+      d.innerHTML = '<span></span><span></span>';
+      d.children[0].textContent = nhan;
+      d.children[1].textContent = giaTri;
+      khung.appendChild(d);
+    };
+    hd.dsMon.forEach((m) => them(`${m.tenMon} × ${m.soLuong}`, UI.tien(m.thanhTien)));
+    if (hd.tienGiamGia) them('Giảm giá', `−${UI.tien(hd.tienGiamGia)}`);
+    them('Tổng thanh toán', UI.tien(hd.canThanhToan), 'dong-tien lon');
+    $('tt-hoa-don').replaceChildren(khung);
   }
 
-  nutHuy.addEventListener('click', dongPopup);
-  popup.addEventListener('cancel', (e) => {
-    e.preventDefault(); // phim Esc: khong dong khi dang xu ly
-    dongPopup();
+  nutQuayLai.addEventListener('click', () => {
+    if (trangThai.dangXuLy) return; // dang gui thanh toan thi khong cho quay lai
+    hienMan('ds');
   });
 
   function doiPhuongThuc() {
@@ -278,9 +302,9 @@
   function khoa(dangXuLy) {
     trangThai.dangXuLy = dangXuLy;
     nutXacNhan.disabled = dangXuLy;
-    nutHuy.disabled = dangXuLy;
+    nutQuayLai.disabled = dangXuLy;
     form.querySelectorAll('input').forEach((o) => { o.disabled = dangXuLy; });
-    nutXacNhan.textContent = dangXuLy ? 'Đang xử lý…' : 'Xác nhận thanh toán';
+    nutXacNhan.textContent = dangXuLy ? 'Đang xử lý…' : '✓ Xác nhận thanh toán';
   }
 
   form.addEventListener('submit', async (e) => {
@@ -311,15 +335,14 @@
     try {
       const ketQua = await Api.post('/payments', body);
       khoa(false);
-      popup.close();
-      thanhToanXong(ketQua);
+      thanhToanXong(ketQua, hd);
     } catch (err) {
       khoa(false);
       xuLyLoiThanhToan(err);
     }
   });
 
-  // 3 nhanh loi nhu SD_ThanhToan: nghiep vu (hien trong popup), mat mang, loi he thong
+  // 3 nhanh loi nhu SD_ThanhToan: nghiep vu (hien tren man thanh toan), mat mang, loi he thong
   function xuLyLoiThanhToan(err) {
     if (err.maLoi === 'MAT_KET_NOI') {
       hienLoiTt('Mất kết nối, chưa rõ đã thanh toán chưa. Bấm "Xác nhận" lại khi có mạng: cùng mã giao dịch nên khách không bị thu 2 lần.');
@@ -335,7 +358,7 @@
       return;
     }
     if (err.maLoi === 'DON_DA_THANH_TOAN' || err.maLoi === 'DON_KHONG_TON_TAI') {
-      popup.close();
+      hienMan('ds');
       UI.toast(thongBaoLoi(err), 'loi', 5000);
       boChonBan();
       return;
@@ -343,35 +366,47 @@
     hienLoiTt(thongBaoLoi(err));
   }
 
-  function thanhToanXong(kq) {
-    const soBan = trangThai.hoaDon.soBan;
+  // Man "Hoan tat": dau tich + phieu hoa don + nut In / Thanh toan ban khac (Figma: hoan-tat)
+  function thanhToanXong(kq, hd) {
     const laTienMat = kq.phuongThuc === 'TIEN_MAT';
     // daXuLyTruoc: lan gui truoc (bi mat phan hoi) da thu roi, server tra lai ket qua cu, khong thu them
     const ghiChu = kq.daXuLyTruoc ? ' Giao dịch đã được ghi nhận từ lần gửi trước, không thu thêm.' : '';
-    UI.toast(`Thanh toán bàn ${soBan} thành công.${laTienMat ? ` Tiền thối ${UI.tien(kq.tienThoi)}.` : ''}${ghiChu}`, 'thanh-cong', 6000);
-    boChonBan();
-    $('tieu-de-hoa-don').textContent = `Đã thanh toán bàn ${soBan}`;
+    UI.toast(`Thanh toán bàn ${hd.soBan} thành công.${ghiChu}`, 'thanh-cong', 6000);
 
-    // Tom tat ket qua de thu ngan doc lai tien thoi cho khach
-    const khung = document.createElement('div');
-    const dong = (nhan, giaTri, lon = false) => {
+    const phieu = document.createDocumentFragment();
+    const tieuDe = document.createElement('h2');
+    tieuDe.textContent = 'HÓA ĐƠN THANH TOÁN';
+    phieu.appendChild(tieuDe);
+    const them = (nhan, giaTri, lop = 'dong-hd') => {
       const d = document.createElement('div');
-      d.className = lon ? 'dong-tien lon' : 'dong-tien';
+      d.className = lop;
       d.innerHTML = '<span></span><span></span>';
       d.children[0].textContent = nhan;
       d.children[1].textContent = giaTri;
-      khung.appendChild(d);
+      phieu.appendChild(d);
     };
-    dong('Số tiền', UI.tien(kq.soTienThanhToan));
-    dong('Phương thức', laTienMat ? 'Tiền mặt' : 'Chuyển khoản QR');
-    dong('Mã giao dịch', kq.maGiaoDich);
-    if (laTienMat) dong('Tiền thối', UI.tien(kq.tienThoi), true);
-    const p = document.createElement('p');
-    p.className = 'rong-nho';
-    p.textContent = 'Bàn đã chuyển sang "Cần dọn". Chọn bàn khác để tiếp tục.';
-    khung.appendChild(p);
-    khuHoaDon.replaceChildren(khung);
+    const nganCach = () => phieu.appendChild(document.createElement('hr')).className = 'ngan-cach';
+
+    const bay = new Date();
+    them('Mã đơn', maDonNgan(hd.donHangId));
+    them('Giờ', bay.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }));
+    them('Bàn', hd.soBan);
+    them('Hình thức', laTienMat ? 'Tiền mặt' : 'Chuyển khoản QR');
+    nganCach();
+    hd.dsMon.forEach((m) => them(`${m.tenMon} × ${m.soLuong}`, UI.tien(m.thanhTien)));
+    nganCach();
+    them('TỔNG CỘNG', UI.tien(kq.soTienThanhToan), 'dong-hd tong');
+    // Server khong tra tien khach dua: khach dua = so tien thu + tien thoi (QR thi tien thoi = 0)
+    them('Khách đưa', UI.tien(kq.soTienThanhToan + kq.tienThoi));
+    them('Tiền thừa trả khách', UI.tien(kq.tienThoi));
+    $('ht-phieu').replaceChildren(phieu);
+
+    boChonBan(); // ban vua thanh toan chuyen CAN_DON: lam moi danh sach o man 1
+    hienMan('ht');
   }
+
+  $('ht-in').addEventListener('click', () => window.print()); // chi in phan phieu (xem @media print o pos.html)
+  $('ht-tiep').addEventListener('click', () => hienMan('ds'));
 
   // Xoa hoa don dang mo; ban vua thanh toan chuyen CAN_DON nen bien mat khoi danh sach
   function boChonBan() {
@@ -425,7 +460,8 @@
       const ten = data.soBan ? `Bàn ${data.soBan}` : 'Đơn hàng';
       UI.toast(`${ten} đã pha chế xong, sẵn sàng thanh toán!`, 'thanh-cong', 6000);
       taiDsBan(true);
-      if (trangThai.ban && (data.banId === trangThai.ban.banId || data.soBan === trangThai.ban.tenBan)) {
+      // Chi tai lai hoa don o man 1: dang o man thanh toan thi khong duoc dat lai ma giao dich
+      if (dangOManDs() && trangThai.ban && (data.banId === trangThai.ban.banId || data.soBan === trangThai.ban.tenBan)) {
         chonBan(trangThai.ban);
       }
     });
@@ -439,8 +475,8 @@
   hienChuThich('Chọn một bàn để xem hóa đơn.');
   taiDsBan();
   ketNoiRealtime();
-  // Tu lam moi danh sach ban 10 giay/lan (khong lam khi dang mo popup)
+  // Tu lam moi danh sach ban 10 giay/lan (chi khi dang o man danh sach)
   setInterval(() => {
-    if (!document.hidden && !popup.open) taiDsBan(true);
+    if (!document.hidden && dangOManDs()) taiDsBan(true);
   }, 10000);
 })();
