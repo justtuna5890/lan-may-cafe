@@ -15,6 +15,15 @@
     'Trà đào': 'tra-dao.jpg',
     'Trà sữa': 'tra-sua.jpg',
     'Bánh Croissant': 'banh-croissant.jpg',
+    'Cà phê americano': 'cf-americano.jpg',
+    'Espresso': 'espresso.jpg',
+    'Chocolate đá': 'chocolate-da.jpg',
+    'Matcha Latte': 'matcha-latte.jpg',
+    'Trà chanh': 'tra-chanh.jpg',
+    'Trà dâu': 'tra-dau.jpg',
+    'Trà vải': 'tra-vai.jpg',
+    'Bánh cookies': 'banh-cookies.jpg',
+    'Bánh Tiramisu': 'banh-tiramisu.jpg',
   };
 
   // 4 nhom mon theo Figma. CSDL chua co cot nhom nen gan theo tu khoa trong ten mon (khong dau);
