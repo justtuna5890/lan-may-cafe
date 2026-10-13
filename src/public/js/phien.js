@@ -45,12 +45,13 @@ const Phien = (() => {
 
   // NhanVien.dangXuat(): token JWT khong luu o server, nen chi can xoa phia giao dien
   // Cookie giu trang la HttpOnly nen phai nho server xoa; loi mang thi van dang xuat o phia giao dien
-  async function dangXuat() {
+  // diaChi: trang se ve sau khi xoa phien (mac dinh la trang dang nhap)
+  async function dangXuat(diaChi = '/') {
     xoa();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (e) { /* bo qua */ }
-    window.location.replace('/');
+    window.location.replace(diaChi);
   }
 
   // Goi o dau moi trang: chua dang nhap -> ve trang dang nhap; sai vai tro -> ve trang chu cua minh
@@ -61,7 +62,10 @@ const Phien = (() => {
       return null;
     }
     if (vaiTroDuocVao.length && !vaiTroDuocVao.includes(p.vaiTro)) {
-      window.location.replace(p.trangChu || '/');
+      // Server (theo cookie) da cho vao trang nay ma vai tro luu o trinh duyet lai khong duoc vao
+      // = hai noi lech nhau (vd: dang nhap tai khoan khac o tab khac). Ve "trang chu cua minh" se bi
+      // server day nguoc lai -> lap vo han, nen xoa ca phien lan cookie roi bat dang nhap lai
+      dangXuat('/?doiTaiKhoan=1');
       return null;
     }
     veThanhMenu(p);
@@ -89,7 +93,7 @@ const Phien = (() => {
     });
     top.querySelector('.ho-ten').textContent = p.hoTen;
     top.querySelector('.vai-tro').textContent = TEN_VAI_TRO[p.vaiTro] || p.vaiTro;
-    top.querySelector('#nut-dang-xuat').addEventListener('click', dangXuat);
+    top.querySelector('#nut-dang-xuat').addEventListener('click', () => dangXuat()); // boc lai de khong truyen su kien click vao tham so diaChi
   }
 
   return { luu, lay, xoa, token, dangXuat, yeuCau, TEN_VAI_TRO };
