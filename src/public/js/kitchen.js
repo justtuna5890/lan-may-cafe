@@ -8,7 +8,7 @@
   const el = {};
 
   function khoiTao() {
-    const phien = Phien.yeuCau('BARISTA');
+    const phien = Phien.yeuCau('BARISTA', 'CHU_QUAN');
     if (!phien) return;
     ['danh-sach-mon', 'loi-kds', 'trang-thai-ket-noi', 'thoi-diem-cap-nhat', 'dem-cho', 'dem-dang-lam', 'dem-tat-ca', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));

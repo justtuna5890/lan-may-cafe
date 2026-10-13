@@ -1,7 +1,7 @@
 // Man Phuc vu (H3): so do ban, goi mon (UC01), cap nhat order (UC04)
 // Can nap ui.js, phien.js, api.js truoc file nay.
 (() => {
-  const phien = Phien.yeuCau('PHUC_VU');
+  const phien = Phien.yeuCau('PHUC_VU', 'CHU_QUAN');
   if (!phien) return;
 
   const TEN_TT_BAN = { TRONG: 'Trống', DANG_PHUC_VU: 'Đang phục vụ', CAN_DON: 'Cần dọn', DAT_TRUOC: 'Đặt trước' };

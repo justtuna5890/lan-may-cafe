@@ -15,7 +15,7 @@ const Phien = (() => {
     BARISTA: [['/kitchen.html', 'Màn bếp'], ['/kho.html', 'Quản lý kho']],
     THU_NGAN: [['/pos.html', 'Thu ngân']],
     // API chi cho dung vai tro (api-contract, tests/phanquyen.test.js): chu quan khong vao man cua vai tro khac
-    CHU_QUAN: [['/dashboard.html', 'Tổng quan'], ['/quan-ly-menu.html', 'Quản lý menu'], ['/bao-cao.html', 'Báo cáo doanh thu']],
+    CHU_QUAN: [['/dashboard.html', 'Tổng quan'], ['/tables.html', 'Sơ đồ bàn'], ['/pos.html', 'Thu ngân'], ['/kitchen.html', 'Màn bếp'], ['/kho.html', 'Kho'], ['/quan-ly-menu.html', 'Quản lý menu'], ['/bao-cao.html', 'Báo cáo doanh thu']], // Chủ quán có toàn quyền
   };
 
   // ghiNho = true: luu localStorage (giu sau khi tat trinh duyet), false: sessionStorage

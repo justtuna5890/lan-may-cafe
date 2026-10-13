@@ -5,10 +5,10 @@ const TEN_COOKIE = 'lm_token';
 // Moi trang giao dien chi cho dung vai tro (khop MENU trong public/js/phien.js).
 // Trang .html khac khong co trong bang nay thi chi can da dang nhap.
 const TRANG_THEO_VAI_TRO = Object.freeze({
-  '/tables.html': ['PHUC_VU'],
-  '/pos.html': ['THU_NGAN'],
-  '/kitchen.html': ['BARISTA'],
-  '/kho.html': ['BARISTA'],
+  '/tables.html': ['PHUC_VU', 'CHU_QUAN'], // Chủ quán có toàn quyền
+  '/pos.html': ['THU_NGAN', 'CHU_QUAN'],
+  '/kitchen.html': ['BARISTA', 'CHU_QUAN'],
+  '/kho.html': ['BARISTA', 'CHU_QUAN'],
   '/dashboard.html': ['CHU_QUAN'],
   '/quan-ly-menu.html': ['CHU_QUAN'],
   '/bao-cao.html': ['CHU_QUAN'],
