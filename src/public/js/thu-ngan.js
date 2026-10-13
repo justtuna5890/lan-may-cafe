@@ -1,7 +1,7 @@
 // Man Thu ngan POS (H4): lap hoa don (UC08), thanh toan (UC10) theo SD_ThanhToan
 // Can nap ui.js, phien.js, api.js truoc file nay.
 (() => {
-  const phien = Phien.yeuCau('THU_NGAN');
+  const phien = Phien.yeuCau('THU_NGAN', 'CHU_QUAN');
   if (!phien) return;
 
   // Server tra message khong dau: giao dien hien cau co dau theo maLoi (api-contract muc UC08, UC10)

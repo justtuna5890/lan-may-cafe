@@ -26,6 +26,7 @@ describe('bao ve trang .html', () => {
   test.each([
     ['/tables.html', 'PHUC_VU'], ['/pos.html', 'THU_NGAN'], ['/kitchen.html', 'BARISTA'],
     ['/kho.html', 'BARISTA'], ['/dashboard.html', 'CHU_QUAN'],
+    ['/tables.html', 'CHU_QUAN'], ['/pos.html', 'CHU_QUAN'], ['/kitchen.html', 'CHU_QUAN'], ['/kho.html', 'CHU_QUAN'], // chủ quán có toàn quyền
   ])('%s: dung vai tro %s -> 200', async (trang, vaiTro) => {
     const res = await request(app).get(trang).set('Cookie', cookie(vaiTro));
     expect(res.status).toBe(200);
