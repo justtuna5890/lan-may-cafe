@@ -21,6 +21,11 @@
     hienLoiChung('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
   }
 
+  // Giao dien phat hien vai tro luu o trinh duyet lech voi cookie (xem Phien.yeuCau)
+  if (new URLSearchParams(window.location.search).has('doiTaiKhoan')) {
+    hienLoiChung('Tài khoản đăng nhập đã thay đổi (ví dụ ở tab khác), vui lòng đăng nhập lại.');
+  }
+
   function hienLoiChung(noiDung) {
     hopLoi.textContent = noiDung;
     hopLoi.classList.remove('an');
