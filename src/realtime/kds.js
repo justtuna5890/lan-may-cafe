@@ -205,11 +205,19 @@ function broadcastItemCancelled(orderData) {
 
 
 // =====================================================
+// Kho cập nhật
+// =====================================================
+function broadcastInventoryUpdated(data) {
+  broadcast('inventory-updated', data);
+}
+
+// =====================================================
 // Xuất module
 // =====================================================
 module.exports = {
   subscribeKDS,
   broadcastNewOrder,
   broadcastOrderUpdated,
-  broadcastItemCancelled
+  broadcastItemCancelled,
+  broadcastInventoryUpdated
 };

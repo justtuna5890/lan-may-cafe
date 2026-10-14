@@ -5,6 +5,7 @@ const BanRepository = require('../repositories/BanRepository');
 const MonAnRepository = require('../repositories/MonAnRepository');
 const DonHangRepository = require('../repositories/DonHangRepository');
 const KdsService = require('./KdsService');
+const { broadcastNewOrder, broadcastOrderUpdated, broadcastItemCancelled } = require('../realtime/kds');
 
 class OrderService {
   // Kiem tra o server, khong chi o giao dien (TC-01-04..06, TC-01-11)
@@ -99,12 +100,14 @@ class OrderService {
 
     // Tra ve dung cau truc don day du theo api-contract (UC01)
     const chiTiet = Array.isArray(daLuu.dsChiTiet) && daLuu.dsChiTiet.length ? daLuu.dsChiTiet : dsMon;
-    return OrderService.dungDonDayDu(
+    const ketQua = OrderService.dungDonDayDu(
       { donHangId: daLuu.donHangId || daLuu.id, banId: order.banId, trangThai: order.trangThai },
       chiTiet,
       order.tongTien,
       order.isSynced,
     );
+    broadcastNewOrder(ketQua);
+    return ketQua;
   }
 
   // ---- Ho tro giao dien: so do ban, thuc don, xem don ----
@@ -195,7 +198,9 @@ class OrderService {
       if (!dongBoMoi) await DonHangRepository.capNhatDongBo(don.donHangId, false, conn);
     });
 
-    return OrderService.dungDonDayDu({ ...don, trangThai: trangThaiDon }, chiTiet, tongTien, don.isSynced && dongBoMoi);
+    const ketQua = OrderService.dungDonDayDu({ ...don, trangThai: trangThaiDon }, chiTiet, tongTien, don.isSynced && dongBoMoi);
+    broadcastOrderUpdated(ketQua);
+    return ketQua;
   }
 
   static async suaMon(donHangId, chiTietId, soLuong) {
@@ -210,7 +215,9 @@ class OrderService {
       await DonHangRepository.capNhatChiTiet(chiTietId, { soLuong }, conn);
       await DonHangRepository.capNhatTongTien(don.donHangId, tongTien, conn);
     });
-    return OrderService.dungDonDayDu(don, chiTiet, tongTien, don.isSynced);
+    const ketQua = OrderService.dungDonDayDu(don, chiTiet, tongTien, don.isSynced);
+    broadcastOrderUpdated(ketQua);
+    return ketQua;
   }
 
   static async huyMon(donHangId, chiTietId) {
@@ -225,7 +232,9 @@ class OrderService {
       await DonHangRepository.capNhatChiTiet(chiTietId, { trangThaiCheBien: 'DA_HUY' }, conn);
       await DonHangRepository.capNhatTongTien(don.donHangId, tongTien, conn);
     });
-    return OrderService.dungDonDayDu(don, chiTiet, tongTien, don.isSynced);
+    const ketQua = OrderService.dungDonDayDu(don, chiTiet, tongTien, don.isSynced);
+    broadcastItemCancelled(ketQua);
+    return ketQua;
   }
 }
 

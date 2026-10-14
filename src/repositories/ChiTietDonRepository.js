@@ -48,9 +48,12 @@ class ChiTietDonRepository {
                 ctd.don_gia AS donGia,
                 ctd.ghi_chu AS ghiChu,
                 ctd.trang_thai_che_bien AS trangThaiCheBien,
-                dh.trang_thai AS trangThaiDon
+                dh.trang_thai AS trangThaiDon,
+                dh.ban_id AS banId,
+                b.so_ban AS soBan
             FROM chi_tiet_don ctd
             INNER JOIN don_hang dh ON dh.id = ctd.don_hang_id
+            LEFT JOIN ban b ON b.id = dh.ban_id
             WHERE ctd.id = ?
             LIMIT 1
             FOR UPDATE

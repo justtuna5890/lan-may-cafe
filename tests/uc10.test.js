@@ -145,3 +145,28 @@ describe('UC10 thanh toan hoa don', () => {
     expect(r).toMatchObject({ soTienThanhToan: 80000, tienThoi: 20000 });
   });
 });
+
+describe('UC10 thanh toan - dong thoi', () => {
+  test('don da DA_THANH_TOAN khi khoa dong (yeu cau khac vua tra xong) thi bi tu choi, khong ghi gi', async () => {
+    DonHangRepository.findById
+      .mockResolvedValueOnce({ ...DON }) // kiem tra ban dau: con thanh toan duoc
+      .mockResolvedValueOnce({ ...DON, trangThai: 'DA_THANH_TOAN' }); // sau khi khoa dong: da bi nguoi khac tra
+    await expect(PaymentService.processPayment(reqTienMat(100000))).rejects.toMatchObject({
+      maLoi: 'DON_DA_THANH_TOAN', status: 409,
+    });
+    khongGhiGi();
+    expect(DonHangRepository.findById).toHaveBeenLastCalledWith('dh-001', 'CONN', { khoa: true });
+    expect(trangThaiTx.rollback).toBe(1);
+  });
+
+  test('cung ma giao dich, yeu cau cham thay don da tra: tra ket qua cu thay vi bao loi', async () => {
+    DonHangRepository.findById
+      .mockResolvedValueOnce({ ...DON })
+      .mockResolvedValueOnce({ ...DON, trangThai: 'DA_THANH_TOAN' });
+    ThanhToanRepository.findByMaGiaoDich
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ maGiaoDich: 'gd-0001', donHangId: 'dh-001', phuongThuc: 'TIEN_MAT', soTienThanhToan: 90000, tienThoi: 10000 });
+    const r = await PaymentService.processPayment(reqTienMat(100000));
+    expect(r).toMatchObject({ thanhCong: true, daXuLyTruoc: true, tienThoi: 10000 });
+  });
+});
