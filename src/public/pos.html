@@ -5,65 +5,275 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Thu ngân - Làn Mây POS</title>
   <link rel="icon" href="/assets/logo.svg">
+  <!-- Dùng chung màu, nút, ô nhập, ô bàn của cả app (khung giao diện H1) -->
   <link rel="stylesheet" href="/css/app.css">
   <style>
-    .bo-cuc-pos { display: grid; gap: 1rem; }
-    @media (min-width: 60em) { .bo-cuc-pos { grid-template-columns: 1fr 28rem; align-items: start; } .cot-hoa-don { position: sticky; top: 1rem; } }
-    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
-
-    /* Hoa don */
-    .bang-hd { width: 100%; border-collapse: collapse; margin-bottom: .5rem; font-size: .95rem; }
-    .bang-hd caption { text-align: left; color: var(--muted); font-size: .9rem; margin-bottom: .5rem; }
-    .bang-hd th, .bang-hd td { padding: .45rem .25rem; border-bottom: 1px solid var(--line-nhat); text-align: right; }
-    .bang-hd th:first-child, .bang-hd td:first-child { text-align: left; }
-    .bang-hd thead th { color: var(--muted); font-size: .85rem; }
-
-    /* Trang thanh toan (Figma: thanh-toan): trai = hoa don chi tiet, phai = phuong thuc thanh toan */
-    .hai-cot-tt { display: grid; gap: 1rem; max-width: 62rem; }
-    @media (min-width: 60em) { .hai-cot-tt { grid-template-columns: 1fr 1fr; align-items: start; } }
-    .dong-hd { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px solid var(--line-nhat); }
-    .dong-hd .sl { color: var(--muted); }
-    .chon-pt { border: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .5rem; }
-    .chon-pt legend { font-size: .9rem; color: var(--muted); font-weight: 600; margin-bottom: .3rem; padding: 0; }
-    .chon-pt label { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem .75rem; border: 2px solid var(--line-nhat); border-radius: var(--bo-goc); cursor: pointer; font-weight: 700; }
-    .chon-pt label:has(input:checked) { border-color: var(--brand); background: #FFF6EE; }
-    .goi-y-tien { display: flex; gap: .4rem; flex-wrap: wrap; margin: -.5rem 0 1rem; }
-    .qr-gia { width: 11rem; height: 11rem; margin: 0 auto .75rem; padding: .5rem; background: #fff; border: 2px solid var(--line-nhat); border-radius: 8px; }
-    .qr-gia svg { width: 100%; height: 100%; display: block; }
-    #khu-qr p { text-align: center; }
-
-    /* Trang hoan tat (Figma: hoan-tat): dau tich + phieu hoa don + 2 nut */
-    .hoan-tat { max-width: 28rem; margin: 0 auto; text-align: center; }
-    .dau-tich { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 3px solid var(--ok); color: var(--ok); font-size: 1.8rem; font-weight: 700; }
-    .hoan-tat h1 { font-size: 1.4rem; margin: .6rem 0 1rem; }
-    .phieu { text-align: left; }
-    .phieu h2 { text-align: center; letter-spacing: .05em; }
-    .phieu .dong-hd { border-bottom: none; padding: .2rem 0; }
-    .phieu .ngan-cach { border: none; border-top: 1px dashed var(--line); margin: .6rem 0; }
-    .phieu .dong-hd.tong { font-weight: 700; font-size: 1.15rem; }
-    .hang-nut-ht { display: flex; gap: .6rem; margin-top: 1rem; }
-    .hang-nut-ht .btn { flex: 1; }
-    @media print {
-      .top, .skip, .khong-in, #man-ds, #man-tt { display: none !important; }
-      .the { border: none; }
+    /* Bố cục màn danh sách: điện thoại xếp dọc; máy tính 2 cột (danh sách bàn rộng, cột hóa đơn cố định bên phải và dính khi cuộn) */
+    .bo-cuc-pos {
+      display: grid;
+      gap: 1rem;
     }
 
-    /* Nhan trang thai che bien cua bep */
-    .nhan-tt-don { font-size: .75rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; }
-    .nhan-tt-don.hoan-thanh { background: #E6F4EA; color: #137333; border: 1px solid #137333; }
-    .nhan-tt-don.dang-lam { background: #FFF0D4; color: #9A5200; border: 1px solid #9A5200; }
-    .o-ban.don-hoan-thanh { border-color: #137333 !important; background: #F6FBF7 !important; box-shadow: 0 0 0 2px #A8DAB5; }
-    .dong-tt-bep { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 700; margin-bottom: .6rem; padding: .3rem .6rem; border-radius: 6px; }
-    .dong-tt-bep.hoan-thanh { background: #E6F4EA; color: #137333; }
-    .dong-tt-bep.dang-lam { background: #FFF0D4; color: #9A5200; }
+    @media (min-width: 60em) {
+      .bo-cuc-pos {
+        grid-template-columns: 1fr 28rem;
+        align-items: start;
+      }
+
+      .cot-hoa-don {
+        position: sticky;
+        top: 1rem;
+      }
+    }
+
+    .the h2 {
+      font-size: 1.1rem;
+      margin: 0 0 .75rem;
+    }
+
+    /* ----- Hóa đơn (bảng món, đơn giá, thành tiền) ----- */
+    .bang-hd {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: .5rem;
+      font-size: .95rem;
+    }
+
+    .bang-hd caption {
+      text-align: left;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: .5rem;
+    }
+
+    .bang-hd th, .bang-hd td {
+      padding: .45rem .25rem;
+      border-bottom: 1px solid var(--line-nhat);
+      text-align: right;
+    }
+
+    .bang-hd th:first-child, .bang-hd td:first-child {
+      text-align: left;
+    }
+
+    .bang-hd thead th {
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    /* ----- Trang thanh toán (Figma: thanh-toan): trái = hóa đơn chi tiết, phải = phương thức thanh toán ----- */
+    .hai-cot-tt {
+      display: grid;
+      gap: 1rem;
+      max-width: 62rem;
+    }
+
+    @media (min-width: 60em) {
+      .hai-cot-tt {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .dong-hd {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .35rem 0;
+      border-bottom: 1px solid var(--line-nhat);
+    }
+
+    .dong-hd .sl {
+      color: var(--muted);
+    }
+
+    .chon-pt {
+      border: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      display: grid;
+      gap: .5rem;
+    }
+
+    .chon-pt legend {
+      font-size: .9rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: .3rem;
+      padding: 0;
+    }
+
+    .chon-pt label {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      min-height: 2.75rem;
+      padding: .5rem .75rem;
+      border: 2px solid var(--line-nhat);
+      border-radius: var(--bo-goc);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* Phương thức đang chọn được tô viền màu thương hiệu */
+    .chon-pt label:has(input:checked) {
+      border-color: var(--brand);
+      background: #FFF6EE;
+    }
+
+    .goi-y-tien {
+      display: flex;
+      gap: .4rem;
+      flex-wrap: wrap;
+      margin: -.5rem 0 1rem;
+    }
+
+    .qr-gia {
+      width: 11rem;
+      height: 11rem;
+      margin: 0 auto .75rem;
+      padding: .5rem;
+      background: #fff;
+      border: 2px solid var(--line-nhat);
+      border-radius: 8px;
+    }
+
+    .qr-gia svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #khu-qr p {
+      text-align: center;
+    }
+
+    /* ----- Trang hoàn tất (Figma: hoan-tat): dấu tích + phiếu hóa đơn + 2 nút ----- */
+    .hoan-tat {
+      max-width: 28rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .dau-tich {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 50%;
+      border: 3px solid var(--ok);
+      color: var(--ok);
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .hoan-tat h1 {
+      font-size: 1.4rem;
+      margin: .6rem 0 1rem;
+    }
+
+    .phieu {
+      text-align: left;
+    }
+
+    .phieu h2 {
+      text-align: center;
+      letter-spacing: .05em;
+    }
+
+    .phieu .dong-hd {
+      border-bottom: none;
+      padding: .2rem 0;
+    }
+
+    .phieu .ngan-cach {
+      border: none;
+      border-top: 1px dashed var(--line);
+      margin: .6rem 0;
+    }
+
+    .phieu .dong-hd.tong {
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .hang-nut-ht {
+      display: flex;
+      gap: .6rem;
+      margin-top: 1rem;
+    }
+
+    .hang-nut-ht .btn {
+      flex: 1;
+    }
+
+    /* Khi in: chỉ in phiếu, ẩn thanh menu, nút và hai màn còn lại */
+    @media print {
+      .top, .skip, .khong-in, #man-ds, #man-tt {
+        display: none !important;
+      }
+
+      .the {
+        border: none;
+      }
+    }
+
+    /* ----- Nhãn trạng thái chế biến của bếp ----- */
+    .nhan-tt-don {
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+    }
+
+    .nhan-tt-don.hoan-thanh {
+      background: #E6F4EA;
+      color: #137333;
+      border: 1px solid #137333;
+    }
+
+    .nhan-tt-don.dang-lam {
+      background: #FFF0D4;
+      color: #9A5200;
+      border: 1px solid #9A5200;
+    }
+
+    .o-ban.don-hoan-thanh {
+      border-color: #137333 !important;
+      background: #F6FBF7 !important;
+      box-shadow: 0 0 0 2px #A8DAB5;
+    }
+
+    .dong-tt-bep {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .85rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+      padding: .3rem .6rem;
+      border-radius: 6px;
+    }
+
+    .dong-tt-bep.hoan-thanh {
+      background: #E6F4EA;
+      color: #137333;
+    }
+
+    .dong-tt-bep.dang-lam {
+      background: #FFF0D4;
+      color: #9A5200;
+    }
   </style>
 </head>
 <body>
   <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <!-- Thanh menu trên cùng: phien.js tự vẽ theo vai trò đang đăng nhập -->
   <header class="top"></header>
 
   <main class="page" id="noi-dung">
-    <!-- Man 1: danh sach ban + hoa don (UC08) -->
+    <!-- Màn 1: danh sách bàn + hóa đơn (UC08) -->
     <div id="man-ds">
       <div class="dau-trang">
         <h1>Thu ngân</h1>
@@ -85,7 +295,7 @@
       </div>
     </div>
 
-    <!-- Man 2: thanh toan (UC10), bo cuc theo Figma "thanh-toan" -->
+    <!-- Màn 2: thanh toán (UC10), bố cục theo Figma "thanh-toan" -->
     <section id="man-tt" class="an" aria-labelledby="tt-tieu-de">
       <div class="dau-trang">
         <button type="button" class="btn btn-nho" id="tt-quay-lai">← Quay lại</button>
@@ -110,6 +320,7 @@
               <label><input type="radio" name="phuongThuc" value="QR"> Chuyển khoản QR</label>
             </fieldset>
 
+            <!-- Khu tiền mặt: ô nhập số tiền khách đưa, các nút chọn nhanh, tiền thừa -->
             <div id="khu-tien-mat">
               <div class="truong">
                 <label for="tien-khach-dua">Số tiền khách đưa (đ)</label>
@@ -120,6 +331,7 @@
               <div class="dong-tien lon"><span>Tiền thừa</span><span id="tt-tien-thoi">0đ</span></div>
             </div>
 
+            <!-- Khu QR: mã giả lập sinh từ mã giao dịch -->
             <div id="khu-qr" class="an">
               <div class="qr-gia" id="qr-gia" role="img" aria-label="Mã QR thanh toán (giả lập)"></div>
               <p>Khách quét mã để chuyển <strong id="tt-qr-so-tien"></strong>.<br>QR giả lập: bấm xác nhận khi khách đã chuyển xong.</p>
@@ -133,7 +345,7 @@
       </div>
     </section>
 
-    <!-- Man 3: hoan tat (UC10), bo cuc theo Figma "hoan-tat" -->
+    <!-- Màn 3: hoàn tất (UC10), bố cục theo Figma "hoan-tat" -->
     <section id="man-hoan-tat" class="an" aria-labelledby="ht-tieu-de">
       <div class="hoan-tat">
         <span class="dau-tich" aria-hidden="true">✓</span>
@@ -147,6 +359,7 @@
     </section>
   </main>
 
+  <!-- Thứ tự nạp: ui.js (thông báo) -> phien.js (đăng nhập) -> api.js (gọi server) -> code riêng của trang -->
   <script src="/js/ui.js"></script>
   <script src="/js/phien.js"></script>
   <script src="/js/api.js"></script>
