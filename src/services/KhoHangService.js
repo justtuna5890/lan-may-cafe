@@ -114,6 +114,9 @@ class KhoHangService {
                 );
             }
 
+            // Nguyên liệu đang hết (tồn kho <= 0) thì sau khi nhập mới cần mở bán lại các món dùng nó
+            const dangHet = Number(nguyenLieu.tonKho) <= 0;
+
             const daNhap = await KhoHangRepository.nhapKho(
                 id,
                 soLuongNhap,
@@ -128,7 +131,11 @@ class KhoHangService {
                 );
             }
 
-            await KhoHangRepository.dongBoTrangThaiMonAn(id, conn);
+            // Nguyên liệu vẫn còn hàng từ trước thì không đồng bộ lại,
+            // để không mở bán lại món mà Chủ quán đã chủ động tắt bán (UC22)
+            if (dangHet) {
+                await KhoHangRepository.dongBoTrangThaiMonAn(id, conn);
+            }
 
             return await KhoHangRepository.findById(id, conn);
         });
@@ -189,9 +196,15 @@ class KhoHangService {
                 );
             }
 
-            await KhoHangRepository.dongBoTrangThaiMonAn(id, conn);
+            const sauKhiXuat = await KhoHangRepository.findById(id, conn);
 
-            return await KhoHangRepository.findById(id, conn);
+            // Chỉ khóa món khi nguyên liệu vừa hết; còn hàng thì không đồng bộ lại,
+            // để không mở bán lại món mà Chủ quán đã chủ động tắt bán (UC22)
+            if (Number(sauKhiXuat.tonKho) <= 0) {
+                await KhoHangRepository.dongBoTrangThaiMonAn(id, conn);
+            }
+
+            return sauKhiXuat;
         });
 
         broadcastMenuUpdated({ khoHangId: id, loai: 'issue', soLuong: soLuongXuat });
