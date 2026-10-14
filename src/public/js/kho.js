@@ -1,9 +1,11 @@
 (() => {
+  // Màn kho dành cho Barista; chủ quán có toàn quyền nên cũng được vào
+  const VAI_TRO_DUOC_VAO = ['BARISTA', 'CHU_QUAN'];
   const state = { items: [], loc: 'TAT_CA', tuKhoa: '', dangCapNhat: new Set(), formDangMo: null };
   const el = {};
 
   function khoiTao() {
-    if (!Phien.yeuCau('BARISTA', 'CHU_QUAN')) return;
+    if (!Phien.yeuCau(...VAI_TRO_DUOC_VAO)) return;
     ['danh-sach-nguyen-lieu', 'loi-kho', 'thoi-diem-cap-nhat', 'dem-tat-ca', 'dem-con-hang', 'dem-het-hang', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));
     el['tu-khoa'].addEventListener('input', (event) => { state.tuKhoa = event.target.value.trim().toLocaleLowerCase('vi'); veDanhSach(); });
