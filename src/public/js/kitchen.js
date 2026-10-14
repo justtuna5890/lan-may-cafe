@@ -8,7 +8,7 @@
   const el = {};
 
   function khoiTao() {
-    const phien = Phien.yeuCau('BARISTA');
+    const phien = Phien.yeuCau('BARISTA', 'CHU_QUAN');
     if (!phien) return;
     ['danh-sach-mon', 'loi-kds', 'trang-thai-ket-noi', 'thoi-diem-cap-nhat', 'dem-cho', 'dem-dang-lam', 'dem-tat-ca', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));
@@ -95,7 +95,19 @@
     if (!('EventSource' in window)) { datKetNoi('Trình duyệt không hỗ trợ cập nhật trực tiếp', false); return; }
     state.eventSource = new EventSource(`/api/kds/stream?token=${encodeURIComponent(Phien.token() || '')}`);
     state.eventSource.addEventListener('connected', () => datKetNoi('Đã kết nối trực tiếp', true));
-    ['new-order', 'order-updated', 'item-cancelled'].forEach((eventName) => state.eventSource.addEventListener(eventName, () => taiDanhSach(true)));
+    state.eventSource.addEventListener('new-order', () => {
+      UI.amThanh('chime');
+      UI.toast('Có order mới cần pha chế!', 'thanh-cong');
+      taiDanhSach(true);
+    });
+    state.eventSource.addEventListener('order-updated', () => {
+      UI.toast('Đơn hàng vừa được cập nhật!', '');
+      taiDanhSach(true);
+    });
+    state.eventSource.addEventListener('item-cancelled', () => {
+      UI.toast('Có món vừa bị hủy khỏi đơn!', 'loi');
+      taiDanhSach(true);
+    });
     state.eventSource.onerror = () => datKetNoi('Mất kết nối trực tiếp — đang thử lại', false);
   }
   function datKetNoi(noiDung, thanhCong) { el['trang-thai-ket-noi'].textContent = noiDung; el['trang-thai-ket-noi'].classList.toggle('da-ket-noi', thanhCong); }

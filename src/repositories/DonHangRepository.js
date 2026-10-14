@@ -60,7 +60,7 @@ class DonHangRepository {
     // Tim don hang theo ID
     // =====================================================
 
-    static async findById(id, conn = pool) {
+    static async findById(id, conn = pool, { khoa = false } = {}) {
         const [rows] = await conn.query(
             `
       SELECT
@@ -77,6 +77,7 @@ class DonHangRepository {
       FROM don_hang
       WHERE id = ?
       LIMIT 1
+      ${khoa ? 'FOR UPDATE' : ''}
       `,
             [id]
         );

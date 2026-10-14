@@ -1,21 +1,31 @@
 // Man Phuc vu (H3): so do ban, goi mon (UC01), cap nhat order (UC04)
 // Can nap ui.js, phien.js, api.js truoc file nay.
 (() => {
-  const phien = Phien.yeuCau('PHUC_VU');
+  const phien = Phien.yeuCau('PHUC_VU', 'CHU_QUAN');
   if (!phien) return;
 
   const TEN_TT_BAN = { TRONG: 'Trống', DANG_PHUC_VU: 'Đang phục vụ', CAN_DON: 'Cần dọn', DAT_TRUOC: 'Đặt trước' };
   const TEN_CHE_BIEN = { CHO_PHA_CHE: 'Chờ pha chế', DANG_LAM: 'Đang làm', DA_XONG: 'Đã xong', DA_HUY: 'Đã hủy' };
 
-  // Anh mon co san trong /assets, mon khac dung logo
+  // Anh that cua mon trong /assets (nguon va tac gia: docs/nguon-anh.md), mon khac dung logo
   const ANH_MON = {
-    'Cà phê đen': 'cf-den',
-    'Cà phê sữa': 'cf-sua-da',
-    'Bạc xỉu': 'bac-xiu',
-    'Trà đào': 'tra-dao',
-    'Trà sữa': 'tra-sua',
-    'Bánh Croissant': 'banh-croissant',
+    'Cà phê đen': 'cf-den.jpg',
+    'Cà phê sữa': 'cf-sua-da.jpg',
+    'Bạc xỉu': 'bac-xiu.jpg',
+    'Trà đào': 'tra-dao.jpg',
+    'Trà sữa': 'tra-sua.jpg',
+    'Bánh Croissant': 'banh-croissant.jpg',
   };
+
+  // 4 nhom mon theo Figma. CSDL chua co cot nhom nen gan theo tu khoa trong ten mon (khong dau);
+  // mon khong khop tu khoa nao (vi du mon chu quan moi them) vao tab "Ca phe"
+  function nhomCuaMon(tenMon) {
+    const ten = boDau(tenMon);
+    if (/banh|cookie|croissant|tiramisu/.test(ten)) return 'BANH';
+    if (/^tra\b/.test(ten)) return 'TRA';
+    if (/matcha|chocolate|da xay/.test(ten)) return 'DA_XAY';
+    return 'CA_PHE';
+  }
 
   // Server tra message khong dau: giao dien hien cau co dau theo maLoi (api-contract muc UC01, UC04)
   const THONG_BAO = {
@@ -61,6 +71,7 @@
     don: null, // don hien tai cua ban; null = ban chua co don -> tao order moi (UC01)
     gio: [], // mon moi chua gui: { monId, tenMon, gia, soLuong (null neu nhap sai), ghiChu }
     dangGui: false,
+    nhom: 'CA_PHE', // tab nhom mon dang chon (Figma: tab dau tien la Ca phe)
   };
 
   // ================= Man 1: so do ban =================
@@ -194,27 +205,30 @@
   // ---------- Thuc don: mon TAM_HET hien xam, khong chon duoc ----------
   function veThucDon() {
     const tuKhoa = boDau(oTim.value.trim());
-    const ds = trangThai.thucDon.filter((m) => !tuKhoa || boDau(m.tenMon).includes(tuKhoa));
+    // Dang tim kiem thi tim tren ca thuc don (khong gioi han theo tab); khong thi loc theo tab dang chon
+    const ds = trangThai.thucDon.filter((m) => (tuKhoa
+      ? boDau(m.tenMon).includes(tuKhoa)
+      : nhomCuaMon(m.tenMon) === trangThai.nhom));
     if (!ds.length) {
-      UI.trangThaiRong(dsThucDon, tuKhoa ? 'Không tìm thấy món phù hợp.' : 'Thực đơn đang trống.');
+      UI.trangThaiRong(dsThucDon, tuKhoa ? 'Không tìm thấy món phù hợp.' : 'Chưa có món nào trong nhóm này.');
       return;
     }
     const ul = document.createElement('ul');
     ul.className = 'luoi-mon';
     ds.forEach((mon) => {
       const het = mon.trangThai === 'TAM_HET';
-      const nut = document.createElement('button');
-      nut.type = 'button';
-      nut.className = 'o-mon';
-      nut.dataset.monId = mon.monId;
-      nut.innerHTML = `<img alt="" src="/assets/${ANH_MON[mon.tenMon] || 'logo'}.svg">
-        <span class="ten-mon"></span><span class="gia"></span>${het ? '<span class="nhan-het">Tạm hết</span>' : ''}`;
-      nut.querySelector('.ten-mon').textContent = mon.tenMon;
-      nut.querySelector('.gia').textContent = UI.tien(mon.gia);
-      nut.setAttribute('aria-label', het ? `${mon.tenMon}, tạm hết` : `Thêm ${mon.tenMon}, ${UI.tien(mon.gia)}`);
-      if (het) nut.setAttribute('aria-disabled', 'true');
+      const the = document.createElement('div');
+      the.className = 'o-mon';
+      the.dataset.monId = mon.monId;
+      the.innerHTML = `<img alt="" loading="lazy" src="/assets/${ANH_MON[mon.tenMon] || 'logo.svg'}">
+        <span class="ten-mon"></span><span class="gia"></span>${het ? '<span class="nhan-het">Tạm hết</span>' : ''}
+        <button type="button" class="btn btn-nho btn-chinh" data-hd="them">+ Thêm</button>`;
+      the.querySelector('.ten-mon').textContent = mon.tenMon;
+      the.querySelector('.gia').textContent = UI.tien(mon.gia);
+      the.querySelector('[data-hd="them"]').setAttribute('aria-label', het ? `${mon.tenMon}, tạm hết` : `Thêm ${mon.tenMon}, ${UI.tien(mon.gia)}`);
+      if (het) the.setAttribute('aria-disabled', 'true');
       const li = document.createElement('li');
-      li.appendChild(nut);
+      li.appendChild(the);
       ul.appendChild(li);
     });
     dsThucDon.replaceChildren(ul);
@@ -222,10 +236,20 @@
 
   oTim.addEventListener('input', veThucDon);
 
-  dsThucDon.addEventListener('click', (e) => {
-    const nut = e.target.closest('.o-mon');
+  // Tab Ca phe / Tra / Banh / Da xay
+  $('tab-nhom').addEventListener('click', (e) => {
+    const nut = e.target.closest('[data-nhom]');
     if (!nut) return;
-    const mon = trangThai.thucDon.find((m) => m.monId === nut.dataset.monId);
+    trangThai.nhom = nut.dataset.nhom;
+    document.querySelectorAll('#tab-nhom [data-nhom]').forEach((n) => n.setAttribute('aria-pressed', String(n === nut)));
+    oTim.value = ''; // chon tab thi bo tu khoa tim kiem de thay dung nhom
+    veThucDon();
+  });
+
+  dsThucDon.addEventListener('click', (e) => {
+    const nutThem = e.target.closest('[data-hd="them"]'); // chi nut "+ Them" moi them mon vao gio
+    if (!nutThem) return;
+    const mon = trangThai.thucDon.find((m) => m.monId === nutThem.closest('.o-mon').dataset.monId);
     if (!mon) return;
     if (mon.trangThai === 'TAM_HET') {
       UI.toast(`Món ${mon.tenMon} đã hết nguyên liệu.`, 'loi');
@@ -565,6 +589,31 @@
     }, trangThai.ban ? 5000 : 10000);
   }
 
+  // ================= Realtime SSE =================
+  let eventSource = null;
+  function ketNoiRealtime() {
+    if (!('EventSource' in window)) return;
+    eventSource = new EventSource(`/api/pos/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    eventSource.addEventListener('menu-updated', async () => {
+      try {
+        trangThai.thucDon = await Api.get('/menu');
+        if (trangThai.ban) {
+          veThucDon();
+          veGio();
+        }
+        UI.toast('Thực đơn vừa được cập nhật từ kho!', '');
+      } catch (_) {}
+    });
+    eventSource.addEventListener('table-updated', () => {
+      taiSoDo(true);
+    });
+    eventSource.addEventListener('order-completed', () => {
+      if (trangThai.ban) lamMoiDon({ ep: true });
+    });
+    window.addEventListener('beforeunload', () => eventSource?.close());
+  }
+
   taiSoDo();
   batTuLamMoi();
+  ketNoiRealtime();
 })();

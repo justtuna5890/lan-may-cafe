@@ -1,6 +1,7 @@
 const { withTransaction } = require('../config/db');
 const AppError = require('../utils/AppError');
 const { broadcastOrderUpdated } = require('../realtime/kds');
+const { broadcastOrderCompleted } = require('../realtime/pos');
 const ChiTietDonRepository = require('../repositories/ChiTietDonRepository');
 const DonHangRepository = require('../repositories/DonHangRepository');
 
@@ -105,6 +106,8 @@ class KitchenService {
             return {
                 chiTietId,
                 donHangId: item.donHangId,
+                banId: item.banId,
+                soBan: item.soBan,
                 trangThaiCheBien: trangThaiMoi,
                 trangThaiDon: trangThaiDonMoi
             };
@@ -112,6 +115,16 @@ class KitchenService {
 
         // Chỉ phát sự kiện sau khi transaction hoàn tất thành công.
         broadcastOrderUpdated(result);
+
+        // Báo cho Thu ngân khi toàn bộ đơn đã hoàn thành chế biến
+        if (result.trangThaiDon === 'HOAN_THANH') {
+            broadcastOrderCompleted({
+                donHangId: result.donHangId,
+                banId: result.banId,
+                soBan: result.soBan,
+                trangThaiDon: 'HOAN_THANH'
+            });
+        }
 
         return result;
     }

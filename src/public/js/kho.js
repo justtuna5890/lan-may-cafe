@@ -3,12 +3,22 @@
   const el = {};
 
   function khoiTao() {
-    if (!Phien.yeuCau('BARISTA')) return;
+    if (!Phien.yeuCau('BARISTA', 'CHU_QUAN')) return;
     ['danh-sach-nguyen-lieu', 'loi-kho', 'thoi-diem-cap-nhat', 'dem-tat-ca', 'dem-con-hang', 'dem-het-hang', 'tu-khoa', 'nut-lam-moi'].forEach((id) => { el[id] = document.getElementById(id); });
     document.querySelectorAll('[data-loc]').forEach((nut) => nut.addEventListener('click', () => chonLoc(nut.dataset.loc)));
     el['tu-khoa'].addEventListener('input', (event) => { state.tuKhoa = event.target.value.trim().toLocaleLowerCase('vi'); veDanhSach(); });
     el['nut-lam-moi'].addEventListener('click', () => taiDanhSach());
     taiDanhSach();
+    ketNoiRealtime();
+    window.addEventListener('beforeunload', () => state.eventSource?.close());
+  }
+
+  function ketNoiRealtime() {
+    if (!('EventSource' in window)) return;
+    state.eventSource = new EventSource(`/api/kds/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    state.eventSource.addEventListener('inventory-updated', () => {
+      taiDanhSach(true);
+    });
   }
 
   async function taiDanhSach(im = false) {
