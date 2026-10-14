@@ -5,24 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tổng quan - Làn Mây POS</title>
   <link rel="icon" href="/assets/logo.svg">
+  <!-- Dùng chung màu, nút, thẻ của cả app (khung giao diện H1) -->
   <link rel="stylesheet" href="/css/app.css">
   <style>
-    .o-chuc-nang { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; }
-    .o-chuc-nang .the { height: 100%; }
-    .o-chuc-nang h2 { font-size: 1.1rem; margin: 0 0 .35rem; color: var(--brand); }
-    .o-chuc-nang p { margin: 0; color: var(--muted); font-size: .95rem; }
-    .o-chuc-nang .vai-tro-dung { margin-top: .6rem; color: var(--ink); font-weight: 600; }
-    .o-chuc-nang a { display: block; height: 100%; color: inherit; text-decoration: none; }
-    .o-chuc-nang a:hover .the { border-color: var(--brand); }
+    /* Lưới thẻ chức năng: tự xếp nhiều cột trên máy tính, một cột trên điện thoại */
+    .o-chuc-nang {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+      gap: 1rem;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Mỗi thẻ là một liên kết phủ kín, rê chuột thì viền chuyển màu thương hiệu */
+    .o-chuc-nang a {
+      display: block;
+      height: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .o-chuc-nang a:hover .the {
+      border-color: var(--brand);
+    }
+
+    .o-chuc-nang .the {
+      height: 100%;
+    }
+
+    .o-chuc-nang h2 {
+      font-size: 1.1rem;
+      margin: 0 0 .35rem;
+      color: var(--brand);
+    }
+
+    .o-chuc-nang p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .o-chuc-nang .vai-tro-dung {
+      margin-top: .6rem;
+      color: var(--ink);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
   <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <!-- Thanh menu trên cùng: phien.js tự vẽ theo vai trò đang đăng nhập -->
   <header class="top"></header>
 
   <main class="page" id="noi-dung">
     <h1>Tổng quan</h1>
-      <!-- Chủ quán có toàn quyền: mọi thẻ đều mở được -->
+    <!-- Chủ quán có toàn quyền: mọi thẻ đều mở được -->
     <p class="rong-nho">Chọn chức năng cần dùng. Chủ quán dùng được tất cả các màn hình.</p>
     <ul class="o-chuc-nang">
       <li><a href="/tables.html"><div class="the"><h2>Sơ đồ bàn</h2><p>Xem trạng thái bàn, gọi món, cập nhật order.</p></div></a></li>
@@ -34,10 +72,12 @@
     </ul>
   </main>
 
+  <!-- Thứ tự nạp: ui.js (thông báo) -> phien.js (đăng nhập) -> api.js (gọi server) -->
   <script src="/js/ui.js"></script>
   <script src="/js/phien.js"></script>
   <script src="/js/api.js"></script>
   <script>
+    // Chỉ chủ quán vào được trang này; vai trò khác bị đưa về trang chủ của mình
     Phien.yeuCau('CHU_QUAN');
   </script>
 </body>

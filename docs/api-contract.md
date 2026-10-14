@@ -2,6 +2,8 @@
 
 Phiên bản nháp v0.1 – Tuấn, 03/10/2026. An và Hậu đọc xong nhắn xác nhận lên nhóm; cần sửa thì báo Tuấn trước 21:00 04/10.
 
+v0.2 – Hậu, 13/10/2026: cập nhật cho khớp code đã merge: thêm UC22 (quản lý menu), UC24 (báo cáo doanh thu), `POST /auth/logout`, `GET /pos/stream`; vai trò `CHU_QUAN` được dùng mọi màn; chốt cách xác thực (JWT + cookie giữ trang).
+
 ## 1. Quy ước chung
 
 Base URL: `http://localhost:3000/api`. Body gửi và nhận đều là JSON. Id là chuỗi (VARCHAR(36)). Tiền là số (VND, DECIMAL(12,2)). Thời gian theo ISO 8601.
@@ -14,7 +16,9 @@ Mọi response dùng chung một format (khớp DTO `KetQuaThanhToan`):
 
 Khi lỗi: `success=false`, `data=null`, `maLoi` là mã lỗi (frontend dựa vào đây), `message` là câu hiện cho người dùng.
 
-Xác thực (đề xuất, Hậu chốt ở UC21): sau khi đăng nhập, gọi API bằng header `Authorization: Bearer <token>`. Server lấy `nhanVienId` và `vaiTro` từ token, client không gửi.
+Xác thực (đã chốt ở UC21): token là JWT. Sau khi đăng nhập, gọi API bằng header `Authorization: Bearer <token>`. Server lấy `nhanVienId` và `vaiTro` từ token, client không gửi. Ngoài ra, lúc đăng nhập server đặt thêm cookie `lm_token` (HttpOnly, SameSite=Strict) chỉ để chặn truy cập trực tiếp vào trang `.html` khi chưa đăng nhập hoặc sai vai trò; các API vẫn chỉ đọc header `Bearer`.
+
+Phân quyền: `CHU_QUAN` có toàn quyền, dùng được mọi endpoint của `PHUC_VU`, `THU_NGAN`, `BARISTA`. Cột *Vai trò* ở mục 2 ghi rõ từng endpoint.
 
 Mã lỗi chung:
 
@@ -43,25 +47,31 @@ Giá trị enum (khớp Class Diagram):
 
 | UC | Endpoint | Vai trò | Người làm BE | Người làm FE |
 |---|---|---|---|---|
-| UC21 | `POST /auth/login` | Tất cả | Hậu | Hậu |
-| (hỗ trợ) | `GET /tables` | PHUC_VU, THU_NGAN | Tuấn | Hậu |
-| (hỗ trợ) | `GET /tables/:id/current-order` | PHUC_VU, THU_NGAN | Tuấn | Hậu |
-| (hỗ trợ) | `GET /menu` | PHUC_VU | Tuấn | Hậu |
-| UC01 | `POST /orders` | PHUC_VU | Tuấn | Hậu |
-| (hỗ trợ) | `GET /orders/:id` | PHUC_VU, THU_NGAN | Tuấn | Hậu |
-| UC04 | `POST /orders/:id/items` | PHUC_VU | Tuấn | Hậu |
-| UC04 | `PATCH /orders/:id/items/:chiTietId` | PHUC_VU | Tuấn | Hậu |
-| UC04 | `DELETE /orders/:id/items/:chiTietId` | PHUC_VU | Tuấn | Hậu |
-| UC15 | `GET /kitchen/items` | BARISTA | An | An |
-| UC16 | `PATCH /kitchen/items/:chiTietId/status` | BARISTA | An | An |
-| UC16 | `POST /kitchen/items/:chiTietId/undo` | BARISTA | An | An |
-| (hỗ trợ) | `GET /kds/stream` (SSE, token qua `?token=`) | BARISTA | An | An |
-| (hỗ trợ) | `GET /inventory`, `GET /inventory/:id` | BARISTA | An | An |
-| UC18 | `PATCH /inventory/:id/out-of-stock` | BARISTA | An | An |
-| UC18 | `POST /inventory/:id/restock` | BARISTA | An | An |
-| UC18 | `POST /inventory/:id/issue` | BARISTA | An | An |
-| UC08 | `GET /orders/:id/invoice` | THU_NGAN | Tuấn | Hậu |
-| UC10 | `POST /payments` | THU_NGAN | Tuấn | Hậu |
+| UC21 | `POST /auth/login` | Không cần token | Hậu | Hậu |
+| UC21 | `POST /auth/logout` | Không cần token | Hậu | Hậu |
+| (hỗ trợ) | `GET /tables` | PHUC_VU, THU_NGAN, CHU_QUAN | Tuấn | Hậu |
+| (hỗ trợ) | `GET /tables/:id/current-order` | PHUC_VU, THU_NGAN, CHU_QUAN | Tuấn | Hậu |
+| (hỗ trợ) | `GET /menu` | PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| UC01 | `POST /orders` | PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| (hỗ trợ) | `GET /orders/:id` | PHUC_VU, THU_NGAN, CHU_QUAN | Tuấn | Hậu |
+| UC04 | `POST /orders/:id/items` | PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| UC04 | `PATCH /orders/:id/items/:chiTietId` | PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| UC04 | `DELETE /orders/:id/items/:chiTietId` | PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| UC15 | `GET /kitchen/items` | BARISTA, CHU_QUAN | An | An |
+| UC16 | `PATCH /kitchen/items/:chiTietId/status` | BARISTA, CHU_QUAN | An | An |
+| UC16 | `POST /kitchen/items/:chiTietId/undo` | BARISTA, CHU_QUAN | An | An |
+| (hỗ trợ) | `GET /kds/stream` (SSE, token qua `?token=`) | BARISTA, CHU_QUAN | An | An |
+| (hỗ trợ) | `GET /inventory`, `GET /inventory/:id` | BARISTA, CHU_QUAN | An | An |
+| UC18 | `PATCH /inventory/:id/out-of-stock` | BARISTA, CHU_QUAN | An | An |
+| UC18 | `POST /inventory/:id/restock` | BARISTA, CHU_QUAN | An | An |
+| UC18 | `POST /inventory/:id/issue` | BARISTA, CHU_QUAN | An | An |
+| UC08 | `GET /orders/:id/invoice` | THU_NGAN, CHU_QUAN | Tuấn | Hậu |
+| UC10 | `POST /payments` | THU_NGAN, CHU_QUAN | Tuấn | Hậu |
+| (hỗ trợ) | `GET /pos/stream` (SSE, token qua `?token=`) | THU_NGAN, PHUC_VU, CHU_QUAN | Tuấn | Hậu |
+| UC22 | `GET /menu-items` | CHU_QUAN | Hậu | Hậu |
+| UC22 | `POST /menu-items` | CHU_QUAN | Hậu | Hậu |
+| UC22 | `PATCH /menu-items/:id` | CHU_QUAN | Hậu | Hậu |
+| UC24 | `GET /reports/revenue` | CHU_QUAN | Hậu | Hậu |
 
 ## 3. Chi tiết
 
@@ -78,6 +88,10 @@ Response `data`:
 ```
 
 `trangChu` theo vai trò: PHUC_VU → sơ đồ bàn, BARISTA → màn bếp, THU_NGAN → POS, CHU_QUAN → tổng quan.
+
+Đăng nhập thành công còn đặt cookie `lm_token` (HttpOnly, SameSite=Strict, sống cùng thời gian với token).
+
+`POST /auth/logout` (không cần token, không cần body): xóa cookie `lm_token`. Response `data` là `null`, message "Đã đăng xuất". JWT không lưu ở server nên client tự xóa phiên đã lưu ở trình duyệt (`sessionStorage` hoặc `localStorage`) khi đăng xuất.
 
 | maLoi | HTTP | Khi nào |
 |---|---|---|
@@ -181,7 +195,7 @@ Response `data`:
 
 `POST /inventory/:id/issue`. Request: `{ "soLuong": 5 }`. Xuất kho.
 
-Mọi route bếp và kho (`/kitchen/*`, `/inventory/*`, `/kds/stream`) chỉ cho vai trò `BARISTA`. `/kds/stream` dùng SSE nên không gửi được header: truyền token qua `?token=<jwt>`.
+Mọi route bếp và kho (`/kitchen/*`, `/inventory/*`, `/kds/stream`) chỉ cho vai trò `BARISTA` và `CHU_QUAN`. `/kds/stream` dùng SSE nên không gửi được header: truyền token qua `?token=<jwt>`.
 
 | maLoi | HTTP | Khi nào |
 |---|---|---|
@@ -233,8 +247,54 @@ Ba thao tác ghi (lưu `thanh_toan`, đơn `DA_THANH_TOAN`, bàn `CAN_DON`) ch�
 | `DON_DA_THANH_TOAN` | 409 | Đơn đã thanh toán (mã giao dịch khác) |
 | `DON_CHUA_GUI_BEP` | 409 | Còn món chưa gửi bếp |
 
+### UC22 – Quản lý menu (chỉ `CHU_QUAN`)
+
+Món trả về luôn có dạng `{ "monId", "tenMon", "gia", "trangThai" }`, `trangThai` là `CON_HANG` hoặc `TAM_HET`.
+
+`GET /menu-items` → `data`: toàn bộ thực đơn, sắp tên A → Z, gồm cả món `TAM_HET`. Khác `GET /menu` (dành cho Phục vụ gọi món).
+
+`POST /menu-items` – thêm món mới. Request: `{ "tenMon": "Cà phê muối", "gia": 35000 }`. Response `data` (HTTP 201): món vừa thêm, `trangThai` mặc định `CON_HANG`. Server tự bỏ dấu cách thừa ở tên.
+
+`PATCH /menu-items/:id` – sửa giá và/hoặc bật/tắt bán. Request gửi 1 hoặc cả 2 trường: `{ "gia": 30000 }` hoặc `{ "trangThai": "TAM_HET" }`. Kiểm tra hết rồi mới ghi, nên không bị sửa nửa chừng. Response `data`: món sau khi sửa.
+
+Luật dữ liệu: tên 1–100 ký tự và không trùng tên món đã có (không phân biệt hoa thường); giá là số nguyên từ 1 đến 10.000.000.
+
+| maLoi | HTTP | Khi nào |
+|---|---|---|
+| `TEN_MON_TRONG` | 400 | Tên trống |
+| `TEN_MON_QUA_DAI` | 400 | Tên dài hơn 100 ký tự |
+| `GIA_KHONG_HOP_LE` | 400 | Giá không phải số nguyên từ 1 đến 10.000.000 |
+| `TRANG_THAI_KHONG_HOP_LE` | 400 | `trangThai` khác `CON_HANG`, `TAM_HET` |
+| `DU_LIEU_KHONG_HOP_LE` | 400 | PATCH không gửi `gia` lẫn `trangThai` |
+| `MON_KHONG_TON_TAI` | 404 | Sai id món |
+| `TEN_MON_DA_TON_TAI` | 409 | Trùng tên món đã có |
+
+### UC24 – Báo cáo doanh thu (chỉ `CHU_QUAN`)
+
+`GET /reports/revenue?tuNgay=YYYY-MM-DD&denNgay=YYYY-MM-DD`. Không gửi tham số thì lấy hôm nay; chỉ gửi một ngày thì xem đúng ngày đó. Tính từ 0 giờ ngày `tuNgay` đến hết ngày `denNgay`. Chỉ tính đơn đã thanh toán. Xem tối đa 366 ngày mỗi lần.
+
+Response `data`:
+
+```json
+{
+  "tuNgay": "2026-10-01", "denNgay": "2026-10-13",
+  "soDon": 12, "doanhThu": 1080000, "trungBinhDon": 90000,
+  "theoPhuongThuc": [ { "phuongThuc": "TIEN_MAT", "soDon": 7, "doanhThu": 630000 }, { "phuongThuc": "QR", "soDon": 5, "doanhThu": 450000 } ],
+  "theoNgay": [ { "ngay": "2026-10-12", "soDon": 5, "doanhThu": 450000 } ],
+  "topMon": [ { "monId": "mon-01", "tenMon": "Bạc xỉu", "soLuong": 20, "doanhThu": 900000 } ]
+}
+```
+
+`theoPhuongThuc` luôn có đủ `TIEN_MAT` và `QR` (bằng 0 nếu chưa có giao dịch). `topMon` tối đa 5 món bán chạy nhất. `trungBinhDon` bằng 0 khi chưa có đơn.
+
+| maLoi | HTTP | Khi nào |
+|---|---|---|
+| `NGAY_KHONG_HOP_LE` | 400 | Sai dạng `YYYY-MM-DD` hoặc ngày không có thật (ví dụ 30/02) |
+| `KHOANG_NGAY_KHONG_HOP_LE` | 400 | `tuNgay` sau `denNgay`, hoặc khoảng dài hơn 366 ngày |
+
 ## 4. Điểm cần chốt
 
 1. **Bàn đã có đơn:** theo quy tắc đề xuất, `DANG_PHUC_VU` được gọi món, nhưng `POST /orders` sẽ tạo đơn thứ hai cho cùng bàn. Đề xuất: bàn đang có đơn thì client dùng `POST /orders/:id/items` (UC04), và `POST /orders` trả `BAN_DA_CO_DON` (409). Tuấn và Kiệt chốt.
 2. **Trạng thái bàn thứ 4:** An cho biết tên đúng theo ERD để cập nhật enum.
-3. **Token:** Hậu xác nhận cách làm (JWT hoặc session) khi làm UC21.
+3. ~~**Token**~~ Đã chốt: JWT qua header `Bearer`, thêm cookie `lm_token` để chặn trang `.html` (xem mục 1).
+4. **Đổi tài khoản trên cùng trình duyệt:** cookie `lm_token` và `sessionStorage` có thể lệch vai trò nếu không bấm Đăng xuất trước khi đăng nhập tài khoản khác, làm trang chuyển hướng lặp. Đề xuất Tuấn xem lại cách xử lý (mục A3 trong đề xuất cải tiến).
