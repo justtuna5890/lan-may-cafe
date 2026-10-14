@@ -26,13 +26,16 @@ router.post('/auth/login', AuthController.dangNhap);
 router.post('/auth/logout', AuthController.dangXuat);
 
 // Phan quyen theo api-contract: verifyToken (401) -> requireRole (403)
-// Chủ quán (CHU_QUAN) có toàn quyền: dùng được mọi màn của Phục vụ, Thu ngân, Barista
-const phucVu = [verifyToken, requireRole('PHUC_VU', 'CHU_QUAN')]; // gọi món, cập nhật order
-const thuNgan = [verifyToken, requireRole('THU_NGAN', 'CHU_QUAN')]; // hóa đơn, thanh toán
-const phucVuHoacThuNgan = [verifyToken, requireRole('PHUC_VU', 'THU_NGAN', 'CHU_QUAN')]; // sơ đồ bàn, xem đơn
-const barista = [verifyToken, requireRole('BARISTA', 'CHU_QUAN')]; // màn bếp, kho
-const chuQuan = [verifyToken, requireRole('CHU_QUAN')];
-const posUsers = [verifyToken, requireRole('THU_NGAN', 'PHUC_VU', 'CHU_QUAN')];
+// Tạo cặp kiểm tra "đã đăng nhập" + "đúng vai trò". Chủ quán (CHU_QUAN) có toàn quyền nên luôn được thêm vào danh sách,
+// vì vậy chỉ cần liệt kê các vai trò khác; không liệt kê gì nghĩa là chỉ chủ quán được vào
+const choPhep = (...vaiTro) => [verifyToken, requireRole(...vaiTro, 'CHU_QUAN')];
+
+const phucVu = choPhep('PHUC_VU'); // gọi món, cập nhật order
+const thuNgan = choPhep('THU_NGAN'); // hóa đơn, thanh toán
+const phucVuHoacThuNgan = choPhep('PHUC_VU', 'THU_NGAN'); // sơ đồ bàn, xem đơn
+const barista = choPhep('BARISTA'); // màn bếp, kho
+const chuQuan = choPhep(); // quản lý menu, báo cáo doanh thu
+const posUsers = choPhep('THU_NGAN', 'PHUC_VU'); // luồng realtime cho thu ngân và phục vụ
 
 // Ho tro giao dien
 router.get('/tables', ...phucVuHoacThuNgan, OrderController.layDanhSachBan);
