@@ -1,6 +1,12 @@
 const request = require('supertest');
 const app = require('../src/app');
 
+const { pool } = require('../src/config/db');
+
+// Test dang nhap dung MySQL that, nen phai dong ket noi sau khi chay xong de Jest thoat sach
+afterAll(async () => {
+  await pool.end();
+});
 describe('khung he thong', () => {
   test('GET /api/health tra ve dung format', async () => {
     const res = await request(app).get('/api/health');
