@@ -5,57 +5,243 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sơ đồ bàn - Làn Mây POS</title>
   <link rel="icon" href="/assets/logo.svg">
+  <!-- Dùng chung màu, nút, ô nhập, ô bàn của cả app (khung giao diện H1) -->
   <link rel="stylesheet" href="/css/app.css">
   <style>
-    .bo-cuc-goi-mon { display: grid; gap: 1rem; }
-    @media (min-width: 60em) { .bo-cuc-goi-mon { grid-template-columns: 1fr 26rem; align-items: start; } .cot-don { position: sticky; top: 1rem; } }
-    .the h2 { font-size: 1.1rem; margin: 0 0 .75rem; }
+    /* Bố cục màn gọi món: điện thoại xếp dọc; máy tính 2 cột (thực đơn rộng, cột đơn cố định bên phải và dính khi cuộn) */
+    .bo-cuc-goi-mon {
+      display: grid;
+      gap: 1rem;
+    }
 
-    /* Thuc don */
-    .luoi-mon { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .75rem; list-style: none; padding: 0; margin: 0; }
-    .o-mon { width: 100%; height: 100%; padding: .6rem; border: 2px solid var(--line-nhat); border-radius: 10px; background: #fff; color: var(--ink); text-align: left; display: flex; flex-direction: column; gap: .3rem; }
-    .o-mon img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--nen); }
-    .o-mon .ten-mon { font-weight: 700; }
-    .o-mon .gia { color: var(--brand); font-weight: 700; }
-    .o-mon .btn { margin-top: auto; width: 100%; }
-    .o-mon[aria-disabled="true"] { background: #F1EDEA; color: var(--muted); border-color: var(--line-nhat); }
-    .o-mon[aria-disabled="true"] .btn { background: #CFC3BA; border-color: #CFC3BA; color: var(--muted); cursor: not-allowed; }
+    @media (min-width: 60em) {
+      .bo-cuc-goi-mon {
+        grid-template-columns: 1fr 26rem;
+        align-items: start;
+      }
 
-    /* Tab loc theo nhom mon (Figma: Ca phe / Tra / Banh / Da xay) */
-    .tab-nhom { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .tab-nhom .btn { border-radius: 999px; }
-    .tab-nhom .btn[aria-pressed="true"] { background: var(--brand); color: #fff; }
-    .the h3 { font-size: 1rem; margin: 0 0 .5rem; }
-    .o-mon[aria-disabled="true"] img { filter: grayscale(1); opacity: .55; }
-    .o-mon[aria-disabled="true"] .gia { color: var(--muted); }
-    .nhan-het { align-self: flex-start; font-size: .75rem; font-weight: 700; background: var(--muted); color: #fff; padding: .1rem .5rem; border-radius: 999px; }
+      .cot-don {
+        position: sticky;
+        top: 1rem;
+      }
+    }
 
-    /* Mon da goi + mon moi */
-    .ds-dong { list-style: none; padding: 0; margin: 0 0 .75rem; }
-    .dong-mon { border-bottom: 1px solid var(--line-nhat); padding: .6rem 0; display: grid; gap: .4rem; }
-    .dong-mon:last-child { border-bottom: none; }
-    .dong-mon .hang { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-    .dong-mon .ten { font-weight: 700; flex: 1 1 8rem; }
-    .dong-mon .ghi-chu { font-size: .85rem; color: var(--muted); margin: 0; }
-    .dong-mon.da-huy .ten { text-decoration: line-through; color: var(--muted); }
-    .dong-mon.loi { background: #FDECEA; }
-    .buoc-sl { display: inline-flex; align-items: center; gap: .25rem; }
-    .buoc-sl button { min-height: 2.5rem; }
-    .buoc-sl [data-hd="giam"], .buoc-sl [data-hd="tang"] { width: 2.5rem; padding: 0; }
-    #tieu-de-gio { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--line-nhat); }
-    .buoc-sl input { width: 3.5rem; min-height: 2.5rem; text-align: center; border: 2px solid var(--line); border-radius: var(--bo-goc); }
-    .buoc-sl input[aria-invalid="true"] { border-color: var(--danger); }
-    .dong-mon .o-ghi-chu { width: 100%; min-height: 2.5rem; padding: .4rem .6rem; border: 2px solid var(--line); border-radius: var(--bo-goc); }
-    .dong-mon .loi-o { margin: 0; min-height: 0; }
-    .canh-bao { background: #FFF6E0; border: 1px solid #C58A00; border-radius: 6px; padding: .5rem .75rem; font-size: .9rem; margin: 0 0 .75rem; }
+    .the h2 {
+      font-size: 1.1rem;
+      margin: 0 0 .75rem;
+    }
+
+    /* ----- Thực đơn: lưới thẻ món ----- */
+    .luoi-mon {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+      gap: .75rem;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .o-mon {
+      width: 100%;
+      height: 100%;
+      padding: .6rem;
+      border: 2px solid var(--line-nhat);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+
+    .o-mon img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 6px;
+      background: var(--nen);
+    }
+
+    .o-mon .ten-mon {
+      font-weight: 700;
+    }
+
+    .o-mon .gia {
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    .o-mon .btn {
+      margin-top: auto; /* nút "+ Thêm" luôn nằm đáy thẻ, các thẻ cao bằng nhau */
+      width: 100%;
+    }
+
+    /* Món tạm hết: nền xám, nút khóa */
+    .o-mon[aria-disabled="true"] {
+      background: #F1EDEA;
+      color: var(--muted);
+      border-color: var(--line-nhat);
+    }
+
+    .o-mon[aria-disabled="true"] .btn {
+      background: #CFC3BA;
+      border-color: #CFC3BA;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    /* ----- Tab lọc theo nhóm món (Figma: Cà phê / Trà / Bánh / Đá xay) ----- */
+    .tab-nhom {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .tab-nhom .btn {
+      border-radius: 999px;
+    }
+
+    .tab-nhom .btn[aria-pressed="true"] {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .the h3 {
+      font-size: 1rem;
+      margin: 0 0 .5rem;
+    }
+
+    .o-mon[aria-disabled="true"] img {
+      filter: grayscale(1);
+      opacity: .55;
+    }
+
+    .o-mon[aria-disabled="true"] .gia {
+      color: var(--muted);
+    }
+
+    .nhan-het {
+      align-self: flex-start;
+      font-size: .75rem;
+      font-weight: 700;
+      background: var(--muted);
+      color: #fff;
+      padding: .1rem .5rem;
+      border-radius: 999px;
+    }
+
+    /* ----- Món đã gọi và món mới ----- */
+    .ds-dong {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 .75rem;
+    }
+
+    .dong-mon {
+      border-bottom: 1px solid var(--line-nhat);
+      padding: .6rem 0;
+      display: grid;
+      gap: .4rem;
+    }
+
+    .dong-mon:last-child {
+      border-bottom: none;
+    }
+
+    .dong-mon .hang {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .dong-mon .ten {
+      font-weight: 700;
+      flex: 1 1 8rem;
+    }
+
+    .dong-mon .ghi-chu {
+      font-size: .85rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .dong-mon.da-huy .ten {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .dong-mon.loi {
+      background: #FDECEA;
+    }
+
+    /* Bộ chỉnh số lượng: nút − , ô số, nút + */
+    .buoc-sl {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+    }
+
+    .buoc-sl button {
+      min-height: 2.5rem;
+    }
+
+    .buoc-sl [data-hd="giam"], .buoc-sl [data-hd="tang"] {
+      width: 2.5rem;
+      padding: 0;
+    }
+
+    #tieu-de-gio {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line-nhat);
+    }
+
+    .buoc-sl input {
+      width: 3.5rem;
+      min-height: 2.5rem;
+      text-align: center;
+      border: 2px solid var(--line);
+      border-radius: var(--bo-goc);
+    }
+
+    .buoc-sl input[aria-invalid="true"] {
+      border-color: var(--danger);
+    }
+
+    .dong-mon .o-ghi-chu {
+      width: 100%;
+      min-height: 2.5rem;
+      padding: .4rem .6rem;
+      border: 2px solid var(--line);
+      border-radius: var(--bo-goc);
+    }
+
+    .dong-mon .loi-o {
+      margin: 0;
+      min-height: 0;
+    }
+
+    /* Cảnh báo bếp chưa xác nhận order (quá 5 giây) */
+    .canh-bao {
+      background: #FFF6E0;
+      border: 1px solid #C58A00;
+      border-radius: 6px;
+      padding: .5rem .75rem;
+      font-size: .9rem;
+      margin: 0 0 .75rem;
+    }
   </style>
 </head>
 <body>
   <a class="skip" href="#noi-dung">Bỏ qua, đến nội dung</a>
+  <!-- Thanh menu trên cùng: phien.js tự vẽ theo vai trò đang đăng nhập -->
   <header class="top"></header>
 
   <main class="page" id="noi-dung">
-    <!-- Man 1: so do ban -->
+    <!-- Màn 1: sơ đồ bàn -->
     <section id="man-so-do" aria-labelledby="tieu-de-so-do">
       <div class="dau-trang">
         <h1 id="tieu-de-so-do">Sơ đồ bàn</h1>
@@ -70,7 +256,7 @@
       <div id="luoi-ban"></div>
     </section>
 
-    <!-- Man 2: goi mon (UC01) / cap nhat order (UC04) cua 1 ban -->
+    <!-- Màn 2: gọi món (UC01) / cập nhật order (UC04) của 1 bàn -->
     <section id="man-goi-mon" class="an" aria-labelledby="tieu-de-goi-mon">
       <div class="dau-trang">
         <button type="button" class="btn btn-nho" id="nut-quay-lai">← Sơ đồ bàn</button>
@@ -82,6 +268,7 @@
       </div>
 
       <div class="bo-cuc-goi-mon">
+        <!-- Cột trái: tab nhóm, ô tìm, lưới thẻ món -->
         <section class="the" aria-labelledby="tieu-de-thuc-don">
           <h2 id="tieu-de-thuc-don">Thực đơn</h2>
           <div class="tab-nhom" id="tab-nhom" role="group" aria-label="Lọc món theo nhóm">
@@ -97,6 +284,7 @@
           <div id="ds-thuc-don"></div>
         </section>
 
+        <!-- Cột phải: món đã gọi, món mới, tổng tiền, nút gửi bếp -->
         <div class="cot-don">
           <section class="the" aria-labelledby="tieu-de-chi-tiet">
             <h2 id="tieu-de-chi-tiet">Chi tiết đơn hàng</h2>
@@ -115,6 +303,7 @@
     </section>
   </main>
 
+  <!-- Thứ tự nạp: ui.js (thông báo) -> phien.js (đăng nhập) -> api.js (gọi server) -> code riêng của trang -->
   <script src="/js/ui.js"></script>
   <script src="/js/phien.js"></script>
   <script src="/js/api.js"></script>

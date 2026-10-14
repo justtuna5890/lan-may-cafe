@@ -1,13 +1,15 @@
-// Man Phuc vu (H3): so do ban, goi mon (UC01), cap nhat order (UC04)
-// Can nap ui.js, phien.js, api.js truoc file nay.
+// Màn Phục vụ (H3): sơ đồ bàn, gọi món (UC01), cập nhật order (UC04)
+// Cần nạp ui.js, phien.js, api.js trước file này.
 (() => {
   const phien = Phien.yeuCau('PHUC_VU', 'CHU_QUAN');
   if (!phien) return;
 
+  // ================= Bảng tra =================
+
   const TEN_TT_BAN = { TRONG: 'Trống', DANG_PHUC_VU: 'Đang phục vụ', CAN_DON: 'Cần dọn', DAT_TRUOC: 'Đặt trước' };
   const TEN_CHE_BIEN = { CHO_PHA_CHE: 'Chờ pha chế', DANG_LAM: 'Đang làm', DA_XONG: 'Đã xong', DA_HUY: 'Đã hủy' };
 
-  // Anh that cua mon trong /assets (nguon va tac gia: docs/nguon-anh.md), mon khac dung logo
+  // Ảnh thật của món trong /assets (nguồn và tác giả: docs/nguon-anh.md); món chưa có ảnh dùng logo quán
   const ANH_MON = {
     'Cà phê đen': 'cf-den.jpg',
     'Cà phê sữa': 'cf-sua-da.jpg',
@@ -25,18 +27,9 @@
     'Bánh cookies': 'banh-cookies.jpg',
     'Bánh Tiramisu': 'banh-tiramisu.jpg',
   };
+  const ANH_MAC_DINH = 'logo.svg';
 
-  // 4 nhom mon theo Figma. CSDL chua co cot nhom nen gan theo tu khoa trong ten mon (khong dau);
-  // mon khong khop tu khoa nao (vi du mon chu quan moi them) vao tab "Ca phe"
-  function nhomCuaMon(tenMon) {
-    const ten = boDau(tenMon);
-    if (/banh|cookie|croissant|tiramisu/.test(ten)) return 'BANH';
-    if (/^tra\b/.test(ten)) return 'TRA';
-    if (/matcha|chocolate|da xay/.test(ten)) return 'DA_XAY';
-    return 'CA_PHE';
-  }
-
-  // Server tra message khong dau: giao dien hien cau co dau theo maLoi (api-contract muc UC01, UC04)
+  // Server trả message không dấu: giao diện hiện câu có dấu theo maLoi (api-contract mục UC01, UC04)
   const THONG_BAO = {
     BAN_CAN_DON: 'Bàn đang cần dọn, chưa thể gọi món.',
     BAN_KHONG_TON_TAI: 'Không tìm thấy bàn.',
@@ -51,16 +44,14 @@
     KHONG_CO_QUYEN: 'Tài khoản không có quyền dùng chức năng này.',
   };
 
-  function thongBaoLoi(err) {
-    if (err.maLoi === 'MON_TAM_HET') {
-      const khop = /^Mon (.+) da het nguyen lieu$/.exec(err.message || '');
-      return khop ? `Món ${khop[1]} đã hết nguyên liệu.` : 'Có món đã hết nguyên liệu.';
-    }
-    return THONG_BAO[err.maLoi] || err.message || 'Có lỗi xảy ra.';
-  }
+  // Các lỗi cho biết món trong đơn đã đổi ở nơi khác (bếp vừa làm, máy khác vừa hủy): phải tải lại đơn
+  const LOI_DON_DA_DOI = ['MON_DA_CHE_BIEN', 'MON_DA_HUY', 'MON_TRONG_DON_KHONG_TON_TAI'];
 
-  // Mat ket noi / loi 5xx: api.js da hien toast / alert, man hinh khong bao them
-  const daBaoLoi = (err) => err.maLoi === 'MAT_KET_NOI' || err.status >= 500;
+  const SO_LUONG_TOI_DA = 99;
+  const CHU_KY_SO_DO_MS = 10000; // sơ đồ bàn: 10 giây một lần
+  const CHU_KY_DON_MS = 5000; // đang mở bàn: 5 giây một lần để thấy bếp đổi trạng thái món
+
+  // ================= Phần tử trên trang và trạng thái =================
 
   const $ = (id) => document.getElementById(id);
   const manSoDo = $('man-so-do');
@@ -76,46 +67,112 @@
   const trangThai = {
     dsBan: [],
     thucDon: [],
-    ban: null, // ban dang mo
-    don: null, // don hien tai cua ban; null = ban chua co don -> tao order moi (UC01)
-    gio: [], // mon moi chua gui: { monId, tenMon, gia, soLuong (null neu nhap sai), ghiChu }
+    ban: null, // bàn đang mở
+    don: null, // đơn hiện tại của bàn; null = bàn chưa có đơn -> tạo order mới (UC01)
+    gio: [], // món mới chưa gửi: { monId, tenMon, gia, soLuong (null nếu nhập sai), ghiChu }
     dangGui: false,
-    nhom: 'CA_PHE', // tab nhom mon dang chon (Figma: tab dau tien la Ca phe)
+    nhom: 'CA_PHE', // tab nhóm món đang chọn (Figma: tab đầu tiên là Cà phê)
   };
 
-  // ================= Man 1: so do ban =================
+  // ================= Hàm phụ =================
+
+  // Mất kết nối / lỗi 5xx: api.js đã hiện toast / alert, màn hình không báo thêm
+  const daBaoLoi = (err) => err.maLoi === 'MAT_KET_NOI' || err.status >= 500;
+
+  function thongBaoLoi(err) {
+    if (err.maLoi === 'MON_TAM_HET') {
+      const khop = /^Mon (.+) da het nguyen lieu$/.exec(err.message || '');
+      return khop ? `Món ${khop[1]} đã hết nguyên liệu.` : 'Có món đã hết nguyên liệu.';
+    }
+    return THONG_BAO[err.maLoi] || err.message || 'Có lỗi xảy ra.';
+  }
+
+  // Tìm không dấu: "tra dao" vẫn ra "Trà đào"
+  function boDau(chuoi) {
+    return chuoi.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  }
+
+  // 4 nhóm món theo Figma. CSDL chưa có cột nhóm nên gán theo từ khóa trong tên món (không dấu);
+  // món không khớp từ khóa nào (ví dụ món chủ quán mới thêm) vào tab "Cà phê"
+  function nhomCuaMon(tenMon) {
+    const ten = boDau(tenMon);
+    if (/banh|cookie|croissant|tiramisu/.test(ten)) return 'BANH';
+    if (/^tra\b/.test(ten)) return 'TRA';
+    if (/matcha|chocolate|da xay/.test(ten)) return 'DA_XAY';
+    return 'CA_PHE';
+  }
+
+  // Số lượng hợp lệ là số nguyên từ 1 đến 99; sai thì trả null
+  function docSoLuong(chuoi) {
+    const n = Number(chuoi);
+    return chuoi !== '' && Number.isInteger(n) && n >= 1 && n <= SO_LUONG_TOI_DA ? n : null;
+  }
+
+  // Đặt (hoặc xóa, nếu nội dung rỗng) lỗi ngay dưới một ô nhập
+  function datLoiO(o, noiDung) {
+    o.setAttribute('aria-invalid', noiDung ? 'true' : 'false');
+    const loi = document.getElementById(o.getAttribute('aria-describedby'));
+    if (loi) loi.textContent = noiDung;
+  }
+
+  const hienLoiGio = (noiDung) => {
+    loiGio.textContent = noiDung;
+    loiGio.classList.remove('an');
+  };
+  const anLoiGio = () => loiGio.classList.add('an');
+
+  const laMonHet = (monId) => trangThai.thucDon.some((m) => m.monId === monId && m.trangThai === 'TAM_HET');
+
+  // Chỉ hiện một màn: 'soDo' hoặc 'goiMon'
+  function chuyenMan(ten) {
+    manSoDo.classList.toggle('an', ten !== 'soDo');
+    manGoiMon.classList.toggle('an', ten !== 'goiMon');
+  }
+
+  // Tạo phần tử với class (nếu có) và nhãn chữ (nếu có)
+  function tao(thanh, lop, chu) {
+    const el = document.createElement(thanh);
+    if (lop) el.className = lop;
+    if (chu !== undefined) el.textContent = chu;
+    return el;
+  }
+
+  // Bọc một phần tử vào thẻ <li> (danh sách thẻ món, ô bàn)
+  function boc(li, phanTu) {
+    li.appendChild(phanTu);
+    return li;
+  }
+
+  // ================= Màn 1: sơ đồ bàn =================
+
+  function taoONBan(ban) {
+    const tenTT = TEN_TT_BAN[ban.trangThai] || ban.trangThai;
+    const nut = tao('button', 'o-ban');
+    nut.type = 'button';
+    nut.dataset.tt = ban.trangThai;
+    nut.dataset.banId = ban.banId;
+    nut.innerHTML = '<span class="ten-ban"></span><span class="tt-ban"></span>';
+    nut.querySelector('.ten-ban').textContent = ban.tenBan;
+    nut.querySelector('.tt-ban').textContent = tenTT;
+    nut.setAttribute('aria-label', `Bàn ${ban.tenBan}, ${tenTT}`);
+    if (ban.trangThai === 'CAN_DON') nut.setAttribute('aria-disabled', 'true'); // bàn cần dọn không gọi món được (UC01)
+    return nut;
+  }
 
   function veSoDo() {
     if (!trangThai.dsBan.length) {
       UI.trangThaiRong(luoiBan, 'Chưa có bàn nào.');
       return;
     }
-    const ul = document.createElement('ul');
-    ul.className = 'luoi-ban';
-    trangThai.dsBan.forEach((ban) => {
-      const tenTT = TEN_TT_BAN[ban.trangThai] || ban.trangThai;
-      const nut = document.createElement('button');
-      nut.type = 'button';
-      nut.className = 'o-ban';
-      nut.dataset.tt = ban.trangThai;
-      nut.dataset.banId = ban.banId;
-      nut.innerHTML = '<span class="ten-ban"></span><span class="tt-ban"></span>';
-      nut.querySelector('.ten-ban').textContent = ban.tenBan;
-      nut.querySelector('.tt-ban').textContent = tenTT;
-      nut.setAttribute('aria-label', `Bàn ${ban.tenBan}, ${tenTT}`);
-      // Ban CAN_DON khong goi mon duoc (UC01)
-      if (ban.trangThai === 'CAN_DON') nut.setAttribute('aria-disabled', 'true');
-      const li = document.createElement('li');
-      li.appendChild(nut);
-      ul.appendChild(li);
-    });
+    const ul = tao('ul', 'luoi-ban');
+    trangThai.dsBan.forEach((ban) => ul.appendChild(boc(tao('li'), taoONBan(ban))));
     luoiBan.replaceChildren(ul);
   }
 
   async function taiSoDo(im = false) {
     try {
       const ds = await Api.get('/tables', { im });
-      if (JSON.stringify(ds) === JSON.stringify(trangThai.dsBan) && luoiBan.firstChild) return;
+      if (JSON.stringify(ds) === JSON.stringify(trangThai.dsBan) && luoiBan.firstChild) return; // không đổi thì khỏi vẽ lại
       trangThai.dsBan = ds;
       veSoDo();
     } catch (err) {
@@ -124,21 +181,14 @@
     }
   }
 
-  luoiBan.addEventListener('click', (e) => {
-    const nut = e.target.closest('.o-ban');
-    if (!nut) return;
-    const ban = trangThai.dsBan.find((b) => b.banId === nut.dataset.banId);
-    if (ban) moBan(ban);
-  });
-
-  // ================= Mo 1 ban: lay thuc don + don hien tai =================
+  // ================= Mở một bàn: lấy thực đơn và đơn hiện tại =================
 
   async function layDonCuaBan(banId) {
     try {
       const { donHangId } = await Api.get(`/tables/${encodeURIComponent(banId)}/current-order`);
       return await Api.get(`/orders/${encodeURIComponent(donHangId)}`);
     } catch (err) {
-      if (err.maLoi === 'BAN_KHONG_CO_DON') return null;
+      if (err.maLoi === 'BAN_KHONG_CO_DON') return null; // bàn chưa có đơn: bình thường
       throw err;
     }
   }
@@ -160,8 +210,7 @@
     trangThai.gio = [];
     oTim.value = '';
     anLoiGio();
-    manSoDo.classList.add('an');
-    manGoiMon.classList.remove('an');
+    chuyenMan('goiMon');
     veManGoiMon();
     $('tieu-de-goi-mon').focus();
     batTuLamMoi();
@@ -178,24 +227,20 @@
     trangThai.ban = null;
     trangThai.don = null;
     trangThai.gio = [];
-    manGoiMon.classList.add('an');
-    manSoDo.classList.remove('an');
+    chuyenMan('soDo');
     batTuLamMoi();
     await taiSoDo();
-    // Dua focus ve o ban vua mo (nguoi dung ban phim khong bi lac)
+    // Đưa focus về ô bàn vừa mở (người dùng bàn phím không bị lạc)
     const nut = banCu && luoiBan.querySelector(`[data-ban-id="${CSS.escape(banCu.banId)}"]`);
     if (nut) nut.focus();
   }
 
-  $('nut-quay-lai').addEventListener('click', () => quayVeSoDo());
-  $('nut-tai-lai').addEventListener('click', () => taiSoDo());
-
-  // ================= Man 2: goi mon / cap nhat order =================
+  // ================= Màn 2: gọi món / cập nhật order =================
 
   function veManGoiMon() {
     const { ban, don } = trangThai;
     $('tieu-de-goi-mon').textContent = `Bàn ${ban.tenBan}`;
-    const tt = don ? 'DANG_PHUC_VU' : ban.trangThai;
+    const tt = don ? 'DANG_PHUC_VU' : ban.trangThai; // bàn đã có đơn thì coi như đang phục vụ
     const nhan = $('nhan-ban');
     nhan.dataset.tt = tt;
     nhan.textContent = TEN_TT_BAN[tt] || tt;
@@ -204,17 +249,25 @@
     veGio();
   }
 
-  const laMonHet = (monId) => trangThai.thucDon.some((m) => m.monId === monId && m.trangThai === 'TAM_HET');
+  // ---------- Thực đơn: món TAM_HET hiện xám, không chọn được ----------
 
-  // Tim khong dau: "tra dao" van ra "Trà đào"
-  function boDau(chuoi) {
-    return chuoi.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  function taoTheMon(mon) {
+    const het = mon.trangThai === 'TAM_HET';
+    const the = tao('div', 'o-mon');
+    the.dataset.monId = mon.monId;
+    the.innerHTML = `<img alt="" loading="lazy" src="/assets/${ANH_MON[mon.tenMon] || ANH_MAC_DINH}">
+        <span class="ten-mon"></span><span class="gia"></span>${het ? '<span class="nhan-het">Tạm hết</span>' : ''}
+        <button type="button" class="btn btn-nho btn-chinh" data-hd="them">+ Thêm</button>`;
+    the.querySelector('.ten-mon').textContent = mon.tenMon;
+    the.querySelector('.gia').textContent = UI.tien(mon.gia);
+    the.querySelector('[data-hd="them"]').setAttribute('aria-label', het ? `${mon.tenMon}, tạm hết` : `Thêm ${mon.tenMon}, ${UI.tien(mon.gia)}`);
+    if (het) the.setAttribute('aria-disabled', 'true');
+    return the;
   }
 
-  // ---------- Thuc don: mon TAM_HET hien xam, khong chon duoc ----------
   function veThucDon() {
     const tuKhoa = boDau(oTim.value.trim());
-    // Dang tim kiem thi tim tren ca thuc don (khong gioi han theo tab); khong thi loc theo tab dang chon
+    // Đang tìm kiếm thì tìm trên cả thực đơn (không giới hạn theo tab); không thì lọc theo tab đang chọn
     const ds = trangThai.thucDon.filter((m) => (tuKhoa
       ? boDau(m.tenMon).includes(tuKhoa)
       : nhomCuaMon(m.tenMon) === trangThai.nhom));
@@ -222,56 +275,20 @@
       UI.trangThaiRong(dsThucDon, tuKhoa ? 'Không tìm thấy món phù hợp.' : 'Chưa có món nào trong nhóm này.');
       return;
     }
-    const ul = document.createElement('ul');
-    ul.className = 'luoi-mon';
-    ds.forEach((mon) => {
-      const het = mon.trangThai === 'TAM_HET';
-      const the = document.createElement('div');
-      the.className = 'o-mon';
-      the.dataset.monId = mon.monId;
-      the.innerHTML = `<img alt="" loading="lazy" src="/assets/${ANH_MON[mon.tenMon] || 'logo.svg'}">
-        <span class="ten-mon"></span><span class="gia"></span>${het ? '<span class="nhan-het">Tạm hết</span>' : ''}
-        <button type="button" class="btn btn-nho btn-chinh" data-hd="them">+ Thêm</button>`;
-      the.querySelector('.ten-mon').textContent = mon.tenMon;
-      the.querySelector('.gia').textContent = UI.tien(mon.gia);
-      the.querySelector('[data-hd="them"]').setAttribute('aria-label', het ? `${mon.tenMon}, tạm hết` : `Thêm ${mon.tenMon}, ${UI.tien(mon.gia)}`);
-      if (het) the.setAttribute('aria-disabled', 'true');
-      const li = document.createElement('li');
-      li.appendChild(the);
-      ul.appendChild(li);
-    });
+    const ul = tao('ul', 'luoi-mon');
+    ds.forEach((mon) => ul.appendChild(boc(tao('li'), taoTheMon(mon))));
     dsThucDon.replaceChildren(ul);
   }
 
-  oTim.addEventListener('input', veThucDon);
-
-  // Tab Ca phe / Tra / Banh / Da xay
-  $('tab-nhom').addEventListener('click', (e) => {
-    const nut = e.target.closest('[data-nhom]');
-    if (!nut) return;
-    trangThai.nhom = nut.dataset.nhom;
-    document.querySelectorAll('#tab-nhom [data-nhom]').forEach((n) => n.setAttribute('aria-pressed', String(n === nut)));
-    oTim.value = ''; // chon tab thi bo tu khoa tim kiem de thay dung nhom
-    veThucDon();
-  });
-
-  dsThucDon.addEventListener('click', (e) => {
-    const nutThem = e.target.closest('[data-hd="them"]'); // chi nut "+ Them" moi them mon vao gio
-    if (!nutThem) return;
-    const mon = trangThai.thucDon.find((m) => m.monId === nutThem.closest('.o-mon').dataset.monId);
-    if (!mon) return;
-    if (mon.trangThai === 'TAM_HET') {
-      UI.toast(`Món ${mon.tenMon} đã hết nguyên liệu.`, 'loi');
-      return;
-    }
+  // Thêm một phần vào giỏ: món đã có thì tăng số lượng, chưa có thì thêm dòng mới
+  function themVaoGio(mon) {
     const dong = trangThai.gio.find((d) => d.monId === mon.monId);
-    if (dong) dong.soLuong = Math.min(99, (dong.soLuong || 0) + 1);
+    if (dong) dong.soLuong = Math.min(SO_LUONG_TOI_DA, (dong.soLuong || 0) + 1);
     else trangThai.gio.push({ monId: mon.monId, tenMon: mon.tenMon, gia: mon.gia, soLuong: 1, ghiChu: '' });
-    anLoiGio();
-    veGio();
-  });
+  }
 
-  // ---------- Mon da goi (UC04): sua so luong, huy mon khi con CHO_PHA_CHE ----------
+  // ---------- Món đã gọi (UC04): sửa số lượng, hủy món khi còn CHO_PHA_CHE ----------
+
   function veDon() {
     const { don } = trangThai;
     $('tieu-de-don').classList.toggle('an', !don);
@@ -281,27 +298,40 @@
     }
     const khung = document.createDocumentFragment();
     if (don.isSynced === false) {
-      const p = document.createElement('p');
-      p.className = 'canh-bao';
-      p.textContent = 'Bếp chưa xác nhận order này (quá 5 giây). Đơn vẫn đã được lưu, hãy báo quầy bếp kiểm tra.';
-      khung.appendChild(p);
+      khung.appendChild(tao('p', 'canh-bao', 'Bếp chưa xác nhận order này (quá 5 giây). Đơn vẫn đã được lưu, hãy báo quầy bếp kiểm tra.'));
     }
-    const ul = document.createElement('ul');
-    ul.className = 'ds-dong';
+    const ul = tao('ul', 'ds-dong');
     don.dsMon.forEach((m) => ul.appendChild(taoDongDaGoi(m)));
     khung.appendChild(ul);
 
-    const tong = document.createElement('div');
-    tong.className = 'dong-tien';
+    const tong = tao('div', 'dong-tien');
     tong.innerHTML = '<span>Tổng đơn hiện tại</span><strong></strong>';
     tong.querySelector('strong').textContent = UI.tien(don.tongTien);
     khung.appendChild(tong);
     khuDon.replaceChildren(khung);
   }
 
+  // Hàng sửa số lượng và hủy món; chỉ món CHO_PHA_CHE mới có
+  function taoHangSua(m) {
+    const idSl = `sua-sl-${m.chiTietId}`;
+    const hang = tao('div', 'hang');
+    hang.innerHTML = `
+        <div class="buoc-sl">
+          <label class="sr-only" for="${idSl}"></label>
+          <input type="number" id="${idSl}" min="1" max="99" step="1" inputmode="numeric" aria-describedby="loi-${idSl}">
+          <button type="button" class="btn btn-nho" data-hd="luu">Lưu số lượng</button>
+        </div>
+        <button type="button" class="btn btn-nho btn-nguy-hiem day-phai" data-hd="huy">Hủy món</button>`;
+    hang.querySelector('label').textContent = `Số lượng ${m.tenMon}`;
+    hang.querySelector('input').value = m.soLuong;
+    hang.querySelector('[data-hd="huy"]').setAttribute('aria-label', `Hủy món ${m.tenMon}`);
+    const loi = tao('p', 'loi-o');
+    loi.id = `loi-${idSl}`;
+    return [hang, loi];
+  }
+
   function taoDongDaGoi(m) {
-    const li = document.createElement('li');
-    li.className = 'dong-mon';
+    const li = tao('li', 'dong-mon');
     li.dataset.chiTietId = m.chiTietId;
     if (m.trangThaiCheBien === 'DA_HUY') li.classList.add('da-huy');
     li.innerHTML = `
@@ -316,60 +346,12 @@
       gc.textContent = `Ghi chú: ${m.ghiChu}`;
       gc.classList.remove('an');
     }
-
-    // Chi mon CHO_PHA_CHE moi sua / huy duoc; DANG_LAM, DA_XONG, DA_HUY an nut
-    if (m.trangThaiCheBien === 'CHO_PHA_CHE') {
-      const idSl = `sua-sl-${m.chiTietId}`;
-      const hang = document.createElement('div');
-      hang.className = 'hang';
-      hang.innerHTML = `
-        <div class="buoc-sl">
-          <label class="sr-only" for="${idSl}"></label>
-          <input type="number" id="${idSl}" min="1" max="99" step="1" inputmode="numeric" aria-describedby="loi-${idSl}">
-          <button type="button" class="btn btn-nho" data-hd="luu">Lưu số lượng</button>
-        </div>
-        <button type="button" class="btn btn-nho btn-nguy-hiem day-phai" data-hd="huy">Hủy món</button>`;
-      hang.querySelector('label').textContent = `Số lượng ${m.tenMon}`;
-      hang.querySelector('input').value = m.soLuong;
-      hang.querySelector('[data-hd="huy"]').setAttribute('aria-label', `Hủy món ${m.tenMon}`);
-      const loi = document.createElement('p');
-      loi.className = 'loi-o';
-      loi.id = `loi-${idSl}`;
-      li.append(hang, loi);
-    }
+    // Chỉ món CHO_PHA_CHE mới sửa / hủy được; DANG_LAM, DA_XONG, DA_HUY ẩn nút
+    if (m.trangThaiCheBien === 'CHO_PHA_CHE') li.append(...taoHangSua(m));
     return li;
   }
 
-  khuDon.addEventListener('click', async (e) => {
-    const nut = e.target.closest('[data-hd]');
-    if (!nut || !trangThai.don) return;
-    const li = nut.closest('.dong-mon');
-    const mon = trangThai.don.dsMon.find((m) => String(m.chiTietId) === li.dataset.chiTietId);
-    if (!mon) return;
-    const duongDan = `/orders/${encodeURIComponent(trangThai.don.donHangId)}/items/${encodeURIComponent(mon.chiTietId)}`;
-
-    if (nut.dataset.hd === 'luu') {
-      const o = li.querySelector('input');
-      const soLuong = docSoLuong(o.value);
-      if (soLuong === null) {
-        datLoiO(o, THONG_BAO.SO_LUONG_KHONG_HOP_LE);
-        o.focus();
-        return;
-      }
-      if (soLuong === mon.soLuong) return;
-      await capNhatDon(() => Api.patch(duongDan, { soLuong }), `Đã đổi ${mon.tenMon} thành ${soLuong}.`);
-    }
-
-    if (nut.dataset.hd === 'huy') {
-      const dongY = await UI.xacNhan(`Hủy món ${mon.tenMon} × ${mon.soLuong}? Món sẽ bị trừ khỏi đơn.`, {
-        tieuDe: 'Hủy món', nutChinh: 'Hủy món', nutPhu: 'Giữ lại', nguyHiem: true,
-      });
-      if (!dongY) return;
-      await capNhatDon(() => Api.del(duongDan), `Đã hủy ${mon.tenMon}.`);
-    }
-  });
-
-  // Goi API sua / huy, cap nhat lai don theo response (don day du)
+  // Gọi API sửa / hủy, cập nhật lại đơn theo response (đơn đầy đủ)
   async function capNhatDon(goiApi, thongBaoThanhCong) {
     try {
       trangThai.don = await goiApi();
@@ -379,32 +361,33 @@
     } catch (err) {
       if (daBaoLoi(err)) return;
       UI.toast(thongBaoLoi(err), 'loi', 5000);
-      // Bep vua bat dau lam / mon vua bi huy o may khac: tai lai de thay trang thai moi
-      if (['MON_DA_CHE_BIEN', 'MON_DA_HUY', 'MON_TRONG_DON_KHONG_TON_TAI'].includes(err.maLoi)) await lamMoiDon({ ep: true });
+      // Bếp vừa bắt đầu làm / món vừa bị hủy ở máy khác: tải lại để thấy trạng thái mới
+      if (LOI_DON_DA_DOI.includes(err.maLoi)) await lamMoiDon({ ep: true });
       if (err.maLoi === 'DON_DA_THANH_TOAN') quayVeSoDo({ hoi: false });
     }
   }
 
-  // ---------- Mon moi (gio hang) ----------
-  function docSoLuong(chuoi) {
-    const n = Number(chuoi);
-    return chuoi !== '' && Number.isInteger(n) && n >= 1 && n <= 99 ? n : null;
+  async function suaSoLuongDaGoi(mon, li, duongDan) {
+    const o = li.querySelector('input');
+    const soLuong = docSoLuong(o.value);
+    if (soLuong === null) {
+      datLoiO(o, THONG_BAO.SO_LUONG_KHONG_HOP_LE);
+      o.focus();
+      return;
+    }
+    if (soLuong === mon.soLuong) return; // không đổi gì thì khỏi gọi server
+    await capNhatDon(() => Api.patch(duongDan, { soLuong }), `Đã đổi ${mon.tenMon} thành ${soLuong}.`);
   }
 
-  function datLoiO(o, noiDung) {
-    o.setAttribute('aria-invalid', noiDung ? 'true' : 'false');
-    const loi = document.getElementById(o.getAttribute('aria-describedby'));
-    if (loi) loi.textContent = noiDung;
+  async function huyMonDaGoi(mon, duongDan) {
+    const dongY = await UI.xacNhan(`Hủy món ${mon.tenMon} × ${mon.soLuong}? Món sẽ bị trừ khỏi đơn.`, {
+      tieuDe: 'Hủy món', nutChinh: 'Hủy món', nutPhu: 'Giữ lại', nguyHiem: true,
+    });
+    if (!dongY) return;
+    await capNhatDon(() => Api.del(duongDan), `Đã hủy ${mon.tenMon}.`);
   }
 
-  function hienLoiGio(noiDung) {
-    loiGio.textContent = noiDung;
-    loiGio.classList.remove('an');
-  }
-
-  function anLoiGio() {
-    loiGio.classList.add('an');
-  }
+  // ---------- Món mới (giỏ hàng) ----------
 
   function veGio() {
     if (!trangThai.gio.length) {
@@ -416,8 +399,7 @@
   }
 
   function taoDongGio(d, i) {
-    const li = document.createElement('li');
-    li.className = 'dong-mon';
+    const li = tao('li', 'dong-mon');
     li.dataset.i = i;
     if (laMonHet(d.monId)) li.classList.add('loi');
     li.innerHTML = `
@@ -449,35 +431,6 @@
     return li;
   }
 
-  gioHang.addEventListener('click', (e) => {
-    const nut = e.target.closest('[data-hd]');
-    if (!nut) return;
-    const i = Number(nut.closest('.dong-mon').dataset.i);
-    const d = trangThai.gio[i];
-    if (nut.dataset.hd === 'tang') d.soLuong = Math.min(99, (d.soLuong || 0) + 1);
-    if (nut.dataset.hd === 'giam') d.soLuong = Math.max(1, (d.soLuong || 2) - 1);
-    if (nut.dataset.hd === 'bo') trangThai.gio.splice(i, 1);
-    veGio();
-    // Giu focus o nut vua bam sau khi ve lai
-    const conLai = gioHang.querySelector(`[data-i="${i}"] [data-hd="${nut.dataset.hd}"]`);
-    if (conLai) conLai.focus();
-  });
-
-  // Go so luong / ghi chu: cap nhat trang thai, khong ve lai ca gio de khong mat focus
-  gioHang.addEventListener('input', (e) => {
-    const li = e.target.closest('.dong-mon');
-    if (!li) return;
-    const d = trangThai.gio[Number(li.dataset.i)];
-    if (e.target.type === 'number') {
-      d.soLuong = docSoLuong(e.target.value);
-      datLoiO(e.target, d.soLuong === null ? THONG_BAO.SO_LUONG_KHONG_HOP_LE : '');
-      li.querySelector('.thanh-tien').textContent = UI.tien((d.soLuong || 0) * d.gia);
-      capNhatTong();
-    } else {
-      d.ghiChu = e.target.value;
-    }
-  });
-
   function capNhatTong() {
     const tongGio = trangThai.gio.reduce((tong, d) => tong + (d.soLuong || 0) * d.gia, 0);
     $('tong-gio').textContent = UI.tien(tongGio);
@@ -486,28 +439,32 @@
     if (!trangThai.dangGui) nutGuiBep.textContent = trangThai.don ? 'Gọi thêm (gửi bếp)' : 'Gửi bếp';
   }
 
-  // ---------- Gui bep: UC01 tao order moi, UC04 goi them vao don dang co ----------
-  nutGuiBep.addEventListener('click', guiBep);
+  // ---------- Gửi bếp: UC01 tạo order mới, UC04 gọi thêm vào đơn đang có ----------
 
-  async function guiBep() {
-    if (trangThai.dangGui) return; // chong bam 2 lan
-    anLoiGio();
+  // Kiểm tra giỏ trước ở giao diện; server vẫn kiểm tra lại (SO_LUONG_KHONG_HOP_LE). Trả về false nếu có lỗi
+  function kiemTraGio() {
     if (!trangThai.gio.length) {
       hienLoiGio(THONG_BAO.DS_MON_RONG);
-      return;
+      return false;
     }
-    // Kiem tra truoc o giao dien; server van kiem tra lai (SO_LUONG_KHONG_HOP_LE)
     const iSai = trangThai.gio.findIndex((d) => d.soLuong === null);
     if (iSai >= 0) {
       hienLoiGio('Số lượng mỗi món phải từ 1 đến 99.');
       $(`sl-${iSai}`).focus();
-      return;
+      return false;
     }
     const monHet = trangThai.gio.find((d) => laMonHet(d.monId));
     if (monHet) {
       hienLoiGio(`Món ${monHet.tenMon} đã hết nguyên liệu, hãy bỏ món này.`);
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function guiBep() {
+    if (trangThai.dangGui) return; // chống bấm 2 lần
+    anLoiGio();
+    if (!kiemTraGio()) return;
 
     const dsMon = trangThai.gio.map((d) => ({ monId: d.monId, soLuong: d.soLuong, ghiChu: d.ghiChu.trim() || undefined }));
     const goiThem = Boolean(trangThai.don);
@@ -537,18 +494,18 @@
 
   async function xuLyLoiGui(err) {
     switch (err.maLoi) {
-      case 'MON_TAM_HET': // mon vua het trong luc dang chon: tai lai thuc don de lam xam
+      case 'MON_TAM_HET': // món vừa hết trong lúc đang chọn: tải lại thực đơn để làm xám
         hienLoiGio(thongBaoLoi(err));
         try {
           trangThai.thucDon = await Api.get('/menu');
-        } catch (e) { /* giu thuc don cu */ }
+        } catch (e) { /* giữ thực đơn cũ */ }
         veThucDon();
         veGio();
         break;
-      case 'BAN_DA_CO_DON': // phuc vu khac vua tao don cho ban nay: chuyen sang goi them, giu gio
+      case 'BAN_DA_CO_DON': // phục vụ khác vừa tạo đơn cho bàn này: chuyển sang gọi thêm, giữ giỏ
         try {
           trangThai.don = await layDonCuaBan(trangThai.ban.banId);
-        } catch (e) { /* giu nguyen */ }
+        } catch (e) { /* giữ nguyên */ }
         veManGoiMon();
         hienLoiGio('Bàn vừa có đơn khác. Đã mở đơn hiện tại, bấm "Gọi thêm" để gửi lại các món mới.');
         break;
@@ -562,8 +519,7 @@
     }
   }
 
-  // ================= Tu lam moi =================
-  // So do ban: 10 giay/lan. Dang mo ban: 5 giay/lan de thay bep doi trang thai mon (Cho -> Dang lam -> Da xong)
+  // ================= Tự làm mới =================
 
   async function lamMoiDon({ ep = false } = {}) {
     const don = trangThai.don;
@@ -574,14 +530,14 @@
     } catch (err) {
       return;
     }
-    if (trangThai.don !== don) return; // da doi ban hoac vua cap nhat trong luc cho
+    if (trangThai.don !== don) return; // đã đổi bàn hoặc vừa cập nhật trong lúc chờ
     if (moi.trangThai === 'DA_THANH_TOAN') {
       UI.toast(`Đơn bàn ${trangThai.ban.tenBan} đã được thanh toán.`);
       quayVeSoDo({ hoi: false });
       return;
     }
-    if (!ep && JSON.stringify(moi) === JSON.stringify(don)) return;
-    // Dang go so luong o mon da goi: de lan sau moi ve lai
+    if (!ep && JSON.stringify(moi) === JSON.stringify(don)) return; // không đổi thì khỏi vẽ lại
+    // Đang gõ số lượng ở món đã gọi: để lần sau mới vẽ lại
     if (!ep && khuDon.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
     trangThai.don = moi;
     veDon();
@@ -595,14 +551,14 @@
       if (document.hidden) return;
       if (trangThai.ban) lamMoiDon();
       else taiSoDo(true);
-    }, trangThai.ban ? 5000 : 10000);
+    }, trangThai.ban ? CHU_KY_DON_MS : CHU_KY_SO_DO_MS);
   }
 
   // ================= Realtime SSE =================
-  let eventSource = null;
+
   function ketNoiRealtime() {
     if (!('EventSource' in window)) return;
-    eventSource = new EventSource(`/api/pos/stream?token=${encodeURIComponent(Phien.token() || '')}`);
+    const eventSource = new EventSource(`/api/pos/stream?token=${encodeURIComponent(Phien.token() || '')}`);
     eventSource.addEventListener('menu-updated', async () => {
       try {
         trangThai.thucDon = await Api.get('/menu');
@@ -613,15 +569,96 @@
         UI.toast('Thực đơn vừa được cập nhật từ kho!', '');
       } catch (_) {}
     });
-    eventSource.addEventListener('table-updated', () => {
-      taiSoDo(true);
-    });
+    eventSource.addEventListener('table-updated', () => taiSoDo(true));
     eventSource.addEventListener('order-completed', () => {
       if (trangThai.ban) lamMoiDon({ ep: true });
     });
-    window.addEventListener('beforeunload', () => eventSource?.close());
+    window.addEventListener('beforeunload', () => eventSource.close());
   }
 
+  // ================= Gắn sự kiện =================
+
+  function ganSuKien() {
+    luoiBan.addEventListener('click', (e) => {
+      const nut = e.target.closest('.o-ban');
+      if (!nut) return;
+      const ban = trangThai.dsBan.find((b) => b.banId === nut.dataset.banId);
+      if (ban) moBan(ban);
+    });
+
+    $('nut-quay-lai').addEventListener('click', () => quayVeSoDo());
+    $('nut-tai-lai').addEventListener('click', () => taiSoDo());
+    oTim.addEventListener('input', veThucDon);
+
+    // Tab Cà phê / Trà / Bánh / Đá xay
+    $('tab-nhom').addEventListener('click', (e) => {
+      const nut = e.target.closest('[data-nhom]');
+      if (!nut) return;
+      trangThai.nhom = nut.dataset.nhom;
+      document.querySelectorAll('#tab-nhom [data-nhom]').forEach((n) => n.setAttribute('aria-pressed', String(n === nut)));
+      oTim.value = ''; // chọn tab thì bỏ từ khóa tìm kiếm để thấy đúng nhóm
+      veThucDon();
+    });
+
+    dsThucDon.addEventListener('click', (e) => {
+      const nutThem = e.target.closest('[data-hd="them"]'); // chỉ nút "+ Thêm" mới thêm món vào giỏ
+      if (!nutThem) return;
+      const mon = trangThai.thucDon.find((m) => m.monId === nutThem.closest('.o-mon').dataset.monId);
+      if (!mon) return;
+      if (mon.trangThai === 'TAM_HET') {
+        UI.toast(`Món ${mon.tenMon} đã hết nguyên liệu.`, 'loi');
+        return;
+      }
+      themVaoGio(mon);
+      anLoiGio();
+      veGio();
+    });
+
+    khuDon.addEventListener('click', async (e) => {
+      const nut = e.target.closest('[data-hd]');
+      if (!nut || !trangThai.don) return;
+      const li = nut.closest('.dong-mon');
+      const mon = trangThai.don.dsMon.find((m) => String(m.chiTietId) === li.dataset.chiTietId);
+      if (!mon) return;
+      const duongDan = `/orders/${encodeURIComponent(trangThai.don.donHangId)}/items/${encodeURIComponent(mon.chiTietId)}`;
+      if (nut.dataset.hd === 'luu') await suaSoLuongDaGoi(mon, li, duongDan);
+      if (nut.dataset.hd === 'huy') await huyMonDaGoi(mon, duongDan);
+    });
+
+    gioHang.addEventListener('click', (e) => {
+      const nut = e.target.closest('[data-hd]');
+      if (!nut) return;
+      const i = Number(nut.closest('.dong-mon').dataset.i);
+      const d = trangThai.gio[i];
+      if (nut.dataset.hd === 'tang') d.soLuong = Math.min(SO_LUONG_TOI_DA, (d.soLuong || 0) + 1);
+      if (nut.dataset.hd === 'giam') d.soLuong = Math.max(1, (d.soLuong || 2) - 1);
+      if (nut.dataset.hd === 'bo') trangThai.gio.splice(i, 1);
+      veGio();
+      // Giữ focus ở nút vừa bấm sau khi vẽ lại
+      const conLai = gioHang.querySelector(`[data-i="${i}"] [data-hd="${nut.dataset.hd}"]`);
+      if (conLai) conLai.focus();
+    });
+
+    // Gõ số lượng / ghi chú: cập nhật trạng thái, không vẽ lại cả giỏ để không mất focus
+    gioHang.addEventListener('input', (e) => {
+      const li = e.target.closest('.dong-mon');
+      if (!li) return;
+      const d = trangThai.gio[Number(li.dataset.i)];
+      if (e.target.type === 'number') {
+        d.soLuong = docSoLuong(e.target.value);
+        datLoiO(e.target, d.soLuong === null ? THONG_BAO.SO_LUONG_KHONG_HOP_LE : '');
+        li.querySelector('.thanh-tien').textContent = UI.tien((d.soLuong || 0) * d.gia);
+        capNhatTong();
+      } else {
+        d.ghiChu = e.target.value;
+      }
+    });
+
+    nutGuiBep.addEventListener('click', guiBep);
+  }
+
+  // ================= Khởi động =================
+  ganSuKien();
   taiSoDo();
   batTuLamMoi();
   ketNoiRealtime();
